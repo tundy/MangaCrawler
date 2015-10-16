@@ -130,6 +130,12 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MangaCrawlerDLL\MangaCrawlerDLL.csproj">
+      <Project>{b4f4c42c-64e4-43e3-939f-90e36c8300ce}</Project>
+      <Name>MangaCrawlerDLL</Name>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

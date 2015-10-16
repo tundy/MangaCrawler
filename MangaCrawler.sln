@@ -5,16 +5,56 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MangaCrawlerDLL", "MangaCrawlerDLL\MangaCrawlerDLL.csproj", "{B4F4C42C-64E4-43E3-939F-90E36C8300CE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MangaCrawlerGuiUniversal", "MangaCrawlerGuiUniversal\MangaCrawlerGuiUniversal.csproj", "{87D49659-CEFB-4849-A845-48A508944BED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|ARM = Debug|ARM
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|ARM = Release|ARM
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Debug|ARM.Build.0 = Debug|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Debug|x64.Build.0 = Debug|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Debug|x86.Build.0 = Debug|Any CPU
 		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Release|ARM.ActiveCfg = Release|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Release|ARM.Build.0 = Release|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Release|x64.ActiveCfg = Release|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Release|x64.Build.0 = Release|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Release|x86.ActiveCfg = Release|Any CPU
+		{B4F4C42C-64E4-43E3-939F-90E36C8300CE}.Release|x86.Build.0 = Release|Any CPU
+		{87D49659-CEFB-4849-A845-48A508944BED}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{87D49659-CEFB-4849-A845-48A508944BED}.Debug|ARM.ActiveCfg = Debug|ARM
+		{87D49659-CEFB-4849-A845-48A508944BED}.Debug|ARM.Build.0 = Debug|ARM
+		{87D49659-CEFB-4849-A845-48A508944BED}.Debug|ARM.Deploy.0 = Debug|ARM
+		{87D49659-CEFB-4849-A845-48A508944BED}.Debug|x64.ActiveCfg = Debug|x64
+		{87D49659-CEFB-4849-A845-48A508944BED}.Debug|x64.Build.0 = Debug|x64
+		{87D49659-CEFB-4849-A845-48A508944BED}.Debug|x64.Deploy.0 = Debug|x64
+		{87D49659-CEFB-4849-A845-48A508944BED}.Debug|x86.ActiveCfg = Debug|x86
+		{87D49659-CEFB-4849-A845-48A508944BED}.Debug|x86.Build.0 = Debug|x86
+		{87D49659-CEFB-4849-A845-48A508944BED}.Debug|x86.Deploy.0 = Debug|x86
+		{87D49659-CEFB-4849-A845-48A508944BED}.Release|Any CPU.ActiveCfg = Release|x86
+		{87D49659-CEFB-4849-A845-48A508944BED}.Release|ARM.ActiveCfg = Release|ARM
+		{87D49659-CEFB-4849-A845-48A508944BED}.Release|ARM.Build.0 = Release|ARM
+		{87D49659-CEFB-4849-A845-48A508944BED}.Release|ARM.Deploy.0 = Release|ARM
+		{87D49659-CEFB-4849-A845-48A508944BED}.Release|x64.ActiveCfg = Release|x64
+		{87D49659-CEFB-4849-A845-48A508944BED}.Release|x64.Build.0 = Release|x64
+		{87D49659-CEFB-4849-A845-48A508944BED}.Release|x64.Deploy.0 = Release|x64
+		{87D49659-CEFB-4849-A845-48A508944BED}.Release|x86.ActiveCfg = Release|x86
+		{87D49659-CEFB-4849-A845-48A508944BED}.Release|x86.Build.0 = Release|x86
+		{87D49659-CEFB-4849-A845-48A508944BED}.Release|x86.Deploy.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
