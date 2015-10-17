@@ -17,6 +17,11 @@ namespace MangaCrawlerLib.Crawlers
             }
         }
 
+        internal override string GetMiniature()
+        {
+            return "http://mangastream.com/favicon.ico";
+        }
+
         internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
         {
             HtmlDocument doc = DownloadDocument(a_server);

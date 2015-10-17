@@ -16,12 +16,11 @@ namespace MangaCrawlerLib.Crawlers
 {
     class YoMangaCrawler : Crawler
     {
-        public override string Name
+        public override string Name => "Yo Manga";
+
+        internal override string GetMiniature()
         {
-            get
-            {
-                return "Yo Manga";
-            }
+            return "http://yomanga.co/favicon-16x16.png";
         }
 
         internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
@@ -109,7 +108,7 @@ namespace MangaCrawlerLib.Crawlers
 
         public override string GetServerURL()
         {
-            return "http://yomanga.co/series.php";
+            return "http://yomanga.co/reader/directory/";
         }
 
         internal override string GetImageURL(Page a_page)

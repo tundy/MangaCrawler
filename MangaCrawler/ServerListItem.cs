@@ -14,6 +14,15 @@ namespace MangaCrawler
     {
         public Server Server { get; private set; }
 
+        public override Image GetMiniature()
+        {
+            if (Server.Miniature == null)
+            {
+                Server.UpdateMiniatureViaCrawler();
+            }
+            return Server.Miniature;
+        }
+
         public ServerListItem(Server a_server)
         {
             Server = a_server;

@@ -18,6 +18,11 @@ namespace MangaCrawlerLib.Crawlers
             get { return "Game of Scanlation"; }
         }
 
+        internal override string GetMiniature()
+        {
+            return "http://gameofscanlation.moe/favicon-16x16.png";
+        }
+
         internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
         {
             var li = (from l in DownloadDocument(a_server).DocumentNode.SelectNodes("//li")

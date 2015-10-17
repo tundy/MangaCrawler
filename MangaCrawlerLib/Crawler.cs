@@ -14,6 +14,10 @@ namespace MangaCrawlerLib
     {
         public abstract string Name { get; }
 
+        internal virtual string GetMiniature()
+        {
+            return string.Empty;
+        }
         internal abstract void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback);
         internal abstract void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback);
         internal abstract IEnumerable<Page> DownloadPages(Chapter a_chapter);

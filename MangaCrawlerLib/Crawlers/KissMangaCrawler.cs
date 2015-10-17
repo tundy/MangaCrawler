@@ -22,6 +22,11 @@ namespace MangaCrawlerLib.Crawlers
             }
         }
 
+        internal override string GetMiniature()
+        {
+            return "http://kissmanga.com/Content/images/favicon.ico";
+        }
+
         internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
         {
             var cookies = new CookieContainer();

@@ -38,6 +38,11 @@ namespace MangaCrawlerLib
         }
         #endregion
 
+        public void UpdateMiniatureViaCrawler()
+        {
+            SetMiniature(Crawler.GetMiniature());
+        }
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private Crawler m_crawler;
 

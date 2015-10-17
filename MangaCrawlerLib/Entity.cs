@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using TomanuExtensions;
 using System.IO;
+using System.Net;
 using System.Web;
 
 namespace MangaCrawlerLib
@@ -13,6 +15,17 @@ namespace MangaCrawlerLib
         public ulong ID { get; internal set; }
         public ulong LimiterOrder;
         public string URL { get; internal set; }
+
+        public Image Miniature { get; private set; }
+
+        internal void SetMiniature(string uri)
+        {
+            Uri uriTest;
+            var wc = new WebClient();
+            var ur = Uri.TryCreate(uri, UriKind.RelativeOrAbsolute, out uriTest) ? uri : string.Empty;
+            if(!string.IsNullOrEmpty(ur))
+                Miniature = Image.FromStream(wc.OpenRead(ur));
+        }
 
         protected Entity(ulong a_id)
         {

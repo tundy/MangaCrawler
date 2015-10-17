@@ -19,6 +19,11 @@ namespace MangaCrawlerLib.Crawlers
             }
         }
 
+        internal override string GetMiniature()
+        {
+            return "http://www.thespectrum.net/favicon.ico";
+        }
+
         internal override void DownloadSeries(Server a_server, Action<int, 
             IEnumerable<Serie>> a_progress_callback)
         {
