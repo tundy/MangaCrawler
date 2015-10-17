@@ -17,7 +17,7 @@ namespace MangaCrawlerLib.Crawlers
             }
         }
 
-        internal override string GetMiniature()
+        internal override string GetServerMiniatureUrl()
         {
             return "http://www.mangahere.co/favicon32.ico";
         }

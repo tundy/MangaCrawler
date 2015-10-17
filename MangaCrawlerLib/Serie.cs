@@ -5,8 +5,10 @@ using System.Text;
 using System.Web;
 using System.Diagnostics;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.Threading;
 using System.IO;
+using System.Threading.Tasks;
 using TomanuExtensions.Utils;
 using TomanuExtensions;
 
@@ -36,6 +38,23 @@ namespace MangaCrawlerLib
             }
         }
         #endregion
+
+        public override void UpdateMiniatureViaCrawler()
+        {
+            Task.Factory.StartNew(() =>
+            {
+                try
+                {
+                    SetMiniature(Crawler.GetSerieMiniatureUrl(this), 96, 64);
+                }
+                catch (Exception)
+                {
+                    SetMiniature(new Bitmap(32, 32));
+                    throw;
+                }
+            });
+        }
+
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private Object m_lock = new Object();

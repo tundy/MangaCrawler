@@ -163,13 +163,13 @@ namespace MangaCrawlerTest
             TestXml(server_name);
         }
 
-        [TestMethod]
-        public void TestStarkana()
-        {
-            var server_name = DownloadManager.Instance.Servers.First(
-              el => el.Crawler is MangaCrawlerLib.Crawlers.StarkanaCrawler).Name;
-            TestXml(server_name);
-        }
+        //[TestMethod]
+        //public void TestStarkana()
+        //{
+        //    var server_name = DownloadManager.Instance.Servers.First(
+        //      el => el.Crawler is MangaCrawlerLib.Crawlers.StarkanaCrawler).Name;
+        //    TestXml(server_name);
+        //}
 
         [TestMethod]
         public void TestUnixManga()

@@ -434,6 +434,7 @@
             this.bookmarkedSeriesListBox.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.serieBookmarksListBox_DrawItem);
             this.bookmarkedSeriesListBox.SelectedIndexChanged += new System.EventHandler(this.bookmarkedSeriesListBox_SelectedIndexChanged);
             this.bookmarkedSeriesListBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.serieBookmarksListBox_KeyDown);
+            this.bookmarkedSeriesListBox.ItemHeight = 64;
             // 
             // bookmarkedSeriesContextMenuStrip
             // 
@@ -1174,6 +1175,7 @@
             this.seriesListBox.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.seriesListBox_DrawItem);
             this.seriesListBox.SelectedIndexChanged += new System.EventHandler(this.seriesListBox_SelectedIndexChanged);
             this.seriesListBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.seriesListBox_KeyDown);
+            this.seriesListBox.ItemHeight = 64;
             // 
             // seriesContextMenuStrip
             // 

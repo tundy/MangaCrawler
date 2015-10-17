@@ -6,7 +6,10 @@ using System.Text;
 using TomanuExtensions;
 using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 using System.Web;
+using System.Web.UI.WebControls;
+using Image = System.Drawing.Image;
 
 namespace MangaCrawlerLib
 {
@@ -18,8 +21,50 @@ namespace MangaCrawlerLib
 
         public Image Miniature { get; private set; }
 
-        internal void SetMiniature(string uri)
+        private static Image ScaleImage(Image image, int maxWidth, int maxHeight)
         {
+            if (image == null) return null;
+            var ratioX = (double)maxWidth / image.Width;
+            var ratioY = (double)maxHeight / image.Height;
+            var ratio = Math.Min(ratioX, ratioY);
+
+            var newWidth = (int)(image.Width * ratio);
+            var newHeight = (int)(image.Height * ratio);
+
+            var newImage = new Bitmap(newWidth, newHeight);
+
+            using (var graphics = Graphics.FromImage(newImage))
+                graphics.DrawImage(image, 0, 0, newWidth, newHeight);
+
+            return newImage;
+        }
+
+        public virtual void UpdateMiniatureViaCrawler()
+        {
+            throw new NotImplementedException();
+        }
+
+        internal virtual void SetMiniature(string uri, int maxWidth, int maxHeight)
+        {
+            SetMiniature(uri);
+            Miniature = ScaleImage(Miniature, maxWidth, maxHeight);
+        }
+
+        internal virtual void SetMiniature(Bitmap bmp, int maxWidth, int maxHeight)
+        {
+            Miniature = ScaleImage(bmp, maxWidth, maxHeight);
+        }
+        internal virtual void SetMiniature(Bitmap bmp)
+        {
+            Miniature = bmp;
+        }
+        internal virtual void SetMiniature(string uri)
+        {
+            if (string.IsNullOrEmpty(uri))
+            {
+                Miniature = new Bitmap(8,8);
+                return;
+            }
             Uri uriTest;
             var wc = new WebClient();
             var ur = Uri.TryCreate(uri, UriKind.RelativeOrAbsolute, out uriTest) ? uri : string.Empty;

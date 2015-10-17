@@ -14,10 +14,16 @@ namespace MangaCrawlerLib
     {
         public abstract string Name { get; }
 
-        internal virtual string GetMiniature()
+        internal virtual string GetServerMiniatureUrl()
         {
             return string.Empty;
         }
+
+        internal virtual string GetSerieMiniatureUrl(Serie serie)
+        {
+            return string.Empty;
+        }
+
         internal abstract void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback);
         internal abstract void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback);
         internal abstract IEnumerable<Page> DownloadPages(Chapter a_chapter);
@@ -118,13 +124,14 @@ namespace MangaCrawlerLib
                 try
                 {
                     var web = new HtmlWeb();
-                    cookiePot = cookies;
+                    /*cookiePot = cookies;
                     if (cookiePot != null)
                     {
                         web.UseCookies = true;
-                        web.PreRequest = new HtmlWeb.PreRequestHandler(OnPreRequest2);
-                        web.PostResponse = new HtmlWeb.PostResponseHandler(OnAfterResponse2);
-                    }
+                        web.PreRequest = OnPreRequest2;
+                        //web.PostResponse = OnAfterResponse2;
+                    }*/
+
                     var page = web.Load(Uri.EscapeUriString(a_url));
 
                     if (web.StatusCode == HttpStatusCode.NotFound)

@@ -18,6 +18,15 @@ namespace MangaCrawler
             Serie = a_serie;
         }
 
+        public override Image GetMiniature()
+        {
+            if (Serie.Miniature == null)
+            {
+                Serie.UpdateMiniatureViaCrawler();
+            }
+            return Serie.Miniature ?? new Bitmap(32, 32);
+        }
+
         public override string ToString()
         {
             return Serie.Title;

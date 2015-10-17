@@ -16,17 +16,19 @@ namespace MangaCrawlerLib.Crawlers
 {
     internal class MangaFoxCrawler : Crawler
     {
-        public override string Name
-        {
-            get 
-            {
-                return "Manga Fox";
-            }
-        }
+        public override string Name => "Manga Fox";
 
-        internal override string GetMiniature()
+        internal override string GetServerMiniatureUrl()
         {
             return "http://mangafox.me/favicon.ico";
+        }
+
+        internal override string GetSerieMiniatureUrl(Serie serie)
+        {
+            var web = new HtmlWeb();
+            var doc = web.Load(serie.URL);
+            var img = doc.DocumentNode.SelectSingleNode("//div[@id='series_info']/div[@class='cover']/img");
+            return img.GetAttributeValue("src", "");
         }
 
         internal override void DownloadSeries(Server a_server, Action<int, 
@@ -36,11 +38,9 @@ namespace MangaCrawlerLib.Crawlers
 
             var series = doc.DocumentNode.SelectNodes(
                 "//div[@class='manga_list']/ul/li/a");
-
             var result = from serie in series
-                         select new Serie(a_server,
-                                              serie.GetAttributeValue("href", ""),
-                                              serie.InnerText);
+                         select new Serie(a_server, serie.GetAttributeValue("href", ""), serie.InnerText);
+
 
             a_progress_callback(100, result);
         }

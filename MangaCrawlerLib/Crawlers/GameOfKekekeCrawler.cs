@@ -12,7 +12,7 @@ namespace MangaCrawlerLib.Crawlers
             get { return "Game of Kekeke"; }
         }
 
-        internal override string GetMiniature()
+        internal override string GetServerMiniatureUrl()
         {
             return "http://gameofscanlation.moe/favicon-16x16.png";
         }
