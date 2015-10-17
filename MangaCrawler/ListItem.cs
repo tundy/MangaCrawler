@@ -51,17 +51,21 @@ namespace MangaCrawler
         {
             String text = ToString();
             var img = GetMiniature();
-            var imgWidth = 16;
+            var imgWidth = 0;
 
             if (e.State.HasFlag(DrawItemState.Selected))
+            {
                 e.Graphics.FillRectangle(Brushes.LightBlue, e.Bounds);
+            }
             else
+            {
                 e.DrawBackground();
+            }
 
             if (img != null)
             {
                 e.Graphics.DrawImage(img, e.Bounds.X, e.Bounds.Y, 16, 16);
-                imgWidth = img.Width;
+                imgWidth = img.Width + 1;
             }
 
             var size = e.Graphics.MeasureString(text, e.Font);

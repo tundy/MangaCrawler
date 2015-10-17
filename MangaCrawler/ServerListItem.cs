@@ -20,7 +20,7 @@ namespace MangaCrawler
             {
                 Server.UpdateMiniatureViaCrawler();
             }
-            return Server.Miniature;
+            return Server.Miniature ?? new Bitmap(16, 16);
         }
 
         public ServerListItem(Server a_server)
