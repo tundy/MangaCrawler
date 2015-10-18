@@ -42,17 +42,21 @@ namespace MangaCrawlerLib
 
         public override void UpdateMiniatureViaCrawler()
         {
+            if (MiniatureState == MiniatureStatus.Loading) return;
             Task.Factory.StartNew(() =>
             {
+                MiniatureState = MiniatureStatus.Loading;
                 try
                 {
                     SetMiniature(Crawler.GetServerMiniatureUrl(), 16, 16);
                 }
                 catch (Exception)
                 {
-                    SetMiniature(new Bitmap(16, 16));
+                    //SetMiniature(new Bitmap(16, 16));
+                    MiniatureState = MiniatureStatus.Error;
                     throw;
                 }
+                MiniatureState = MiniatureStatus.Loaded;
             });
         }
 

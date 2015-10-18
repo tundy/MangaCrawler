@@ -19,11 +19,20 @@ namespace MangaCrawlerLib
         public ulong LimiterOrder;
         public string URL { get; internal set; }
 
-        public Image Miniature { get; private set; }
+        public enum MiniatureStatus
+        {
+            None,
+            Loading,
+            Loaded,
+            Error
+        }
+
+        public MiniatureStatus MiniatureState { get; internal set; } = MiniatureStatus.None ;
+        public Image Miniature { get; protected internal set; }
 
         private static Image ScaleImage(Image image, int maxWidth, int maxHeight)
         {
-            if (image == null) return null;
+            if(image == null) throw new ArgumentNullException(nameof(image));
             var ratioX = (double)maxWidth / image.Width;
             var ratioY = (double)maxHeight / image.Height;
             var ratio = Math.Min(ratioX, ratioY);
@@ -46,30 +55,36 @@ namespace MangaCrawlerLib
 
         internal virtual void SetMiniature(string uri, int maxWidth, int maxHeight)
         {
-            SetMiniature(uri);
-            Miniature = ScaleImage(Miniature, maxWidth, maxHeight);
+            if (uri == null) throw new ArgumentNullException(nameof(uri));
+            Uri uriTest;
+            var wc = new WebClient();
+            var ur = Uri.TryCreate(uri, UriKind.RelativeOrAbsolute, out uriTest) ? uri : string.Empty;
+            if (!string.IsNullOrEmpty(ur))
+                Miniature = ScaleImage(Image.FromStream(wc.OpenRead(ur)), maxWidth, maxHeight);
+            else
+                throw new FormatException();
         }
 
         internal virtual void SetMiniature(Bitmap bmp, int maxWidth, int maxHeight)
         {
+            if(bmp == null) throw new ArgumentNullException(nameof(bmp));
             Miniature = ScaleImage(bmp, maxWidth, maxHeight);
         }
         internal virtual void SetMiniature(Bitmap bmp)
         {
+            if(bmp == null) throw new ArgumentNullException(nameof(bmp));
             Miniature = bmp;
         }
         internal virtual void SetMiniature(string uri)
         {
-            if (string.IsNullOrEmpty(uri))
-            {
-                Miniature = new Bitmap(8,8);
-                return;
-            }
+            if (uri == null) throw new ArgumentNullException(nameof(uri));
             Uri uriTest;
             var wc = new WebClient();
             var ur = Uri.TryCreate(uri, UriKind.RelativeOrAbsolute, out uriTest) ? uri : string.Empty;
             if(!string.IsNullOrEmpty(ur))
                 Miniature = Image.FromStream(wc.OpenRead(ur));
+            else
+                throw new FormatException();
         }
 
         protected Entity(ulong a_id)

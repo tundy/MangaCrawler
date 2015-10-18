@@ -14,13 +14,7 @@ namespace MangaCrawlerLib.Crawlers
 {
     internal class KissMangaCrawler : Crawler
     {
-        public override string Name
-        {
-            get 
-            {
-                return "Kissmanga";
-            }
-        }
+        public override string Name => "Kissmanga";
 
         internal override string GetServerMiniatureUrl()
         {

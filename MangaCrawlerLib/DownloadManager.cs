@@ -78,6 +78,12 @@ namespace MangaCrawlerLib
             if (!a_server.IsDownloadRequired(a_force))
                 return;
 
+            if (a_server.MiniatureState != Entity.MiniatureStatus.Loading)
+            {
+                //a_server.Miniature = null;
+                a_server.MiniatureState = Entity.MiniatureStatus.None;
+            }
+
             lock (m_downloading)
             {
                 m_downloading.Add(a_server);
@@ -100,6 +106,12 @@ namespace MangaCrawlerLib
 
             if (!a_serie.IsDownloadRequired(a_force))
                 return;
+
+            if (a_serie.MiniatureState != Entity.MiniatureStatus.Loading)
+            {
+                //a_serie.Miniature = null;
+                a_serie.MiniatureState = Entity.MiniatureStatus.None;
+            }
 
             lock (m_downloading)
             {

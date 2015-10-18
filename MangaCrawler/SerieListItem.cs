@@ -20,7 +20,7 @@ namespace MangaCrawler
 
         public override Image GetMiniature()
         {
-            if (Serie.Miniature == null)
+            if (Serie.MiniatureState == Entity.MiniatureStatus.None)
             {
                 Serie.UpdateMiniatureViaCrawler();
             }
