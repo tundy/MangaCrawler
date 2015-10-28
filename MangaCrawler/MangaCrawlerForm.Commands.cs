@@ -212,7 +212,19 @@ namespace MangaCrawler
 
                 foreach (var chapter in chapters.Take(MAX_TO_OPEN))
                 {
-                    if (chapter.CanReadFirstPage())
+                    if (chapter.CanReadCBZ())
+                    {
+                        try
+                        {
+                            Process.Start(chapter.PathCBZ());
+                        }
+                        catch (Exception ex)
+                        {
+                            Loggers.GUI.Error("Exception", ex);
+                            error = true;
+                        }
+                    }
+                    else if (chapter.CanReadFirstPage())
                     {
                         try
                         {
@@ -225,14 +237,14 @@ namespace MangaCrawler
                         }
                     }
                     else
+                    {
                         error = true;
+                    }
                 }
 
-                if (error)
-                {
-                    SystemSounds.Asterisk.Play();
-                    GUI.UpdateButtons();
-                }
+                if (!error) return;
+                SystemSounds.Asterisk.Play();
+                GUI.UpdateButtons();
             }
 
             public void CancelClearSelectedDownloadings()

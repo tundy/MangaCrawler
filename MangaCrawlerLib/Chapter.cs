@@ -310,6 +310,13 @@ namespace MangaCrawlerLib
             Catalog.Save(this);
         }
 
+        public bool CanReadCBZ()
+        {
+            return File.Exists(this.Serie.GetDirectory() + "/" + this.Title + ".cbz");
+        }
+
+        public string PathCBZ() => this.Serie.GetDirectory() + "/" + this.Title + ".cbz";
+
         private void CreateCBZ()
         {
             Debug.Assert(State == ChapterState.DownloadingPages);
@@ -486,7 +493,7 @@ namespace MangaCrawlerLib
                 }
             }
 
-            return false;
+            return CanReadCBZ();
         }
     }
 }
