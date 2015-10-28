@@ -41,10 +41,10 @@ namespace MangaCrawlerLib
 
         public override void UpdateMiniatureViaCrawler()
         {
+            if (MiniatureState == MiniatureStatus.Loading) return;
+            MiniatureState = MiniatureStatus.Loading;
             Task.Factory.StartNew(() =>
             {
-                if (MiniatureState == MiniatureStatus.Loading) return;
-                MiniatureState = MiniatureStatus.Loading;
                 try
                 {
                     var uri = Crawler.GetSerieMiniatureUrl(this);
