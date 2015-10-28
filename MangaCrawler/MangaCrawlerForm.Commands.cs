@@ -18,7 +18,7 @@ namespace MangaCrawler
         private class MangaCrawlerFormCommands
         {
             public MangaCrawlerFormGUI GUI;
-            private static int MAX_TO_OPEN = 10;
+            private static int MAX_TO_OPEN = 5;
 
             private void UpdateNowServer(Server a_server)
             {
