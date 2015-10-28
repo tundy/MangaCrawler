@@ -21,7 +21,7 @@ namespace MangaCrawlerLib.Crawlers
             return "http://kissmanga.com/Content/images/favicon.ico";
         }
 
-        internal override string GetSerieMiniatureUrl(Serie serie)
+        protected override string _GetSerieMiniatureUrl(Serie serie)
         {
             var web = new HtmlWeb();
             var doc = web.Load(serie.URL);

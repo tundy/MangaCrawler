@@ -26,19 +26,19 @@ namespace MangaCrawlerLib.Crawlers
             return "http://yomanga.co/favicon-16x16.png";
         }
 
-        internal override string GetSerieMiniatureUrl(Serie serie)
+        protected override string _GetSerieMiniatureUrl(Serie serie)
         {
             var doc = new HtmlDocument();
-            var request = (HttpWebRequest)WebRequest.Create(serie.URL);
+            var request = (HttpWebRequest) WebRequest.Create(serie.URL);
             request.Method = "GET";
 
-            using (var response = (HttpWebResponse)request.GetResponse())
+            using (var response = (HttpWebResponse) request.GetResponse())
             {
                 using (var stream = response.GetResponseStream())
                 {
                     if (stream != null && stream.CanRead)
                     {
-                        var stremReader = new StreamReader(stream/*, Encoding.UTF8*/);
+                        var stremReader = new StreamReader(stream /*, Encoding.UTF8*/);
                         doc.LoadHtml(stremReader.ReadToEnd());
                     }
                 }

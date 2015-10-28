@@ -17,6 +17,7 @@ namespace MangaCrawlerLib
             Series = 2,
             Pages = 3,
             Image = 4,
+            Miniature = 5
         }
         #endregion
 
@@ -76,6 +77,11 @@ namespace MangaCrawlerLib
         public static void BeginChapter(Chapter a_chapter)
         {
             Aquire(a_chapter.Server, a_chapter.Token, Priority.Pages, a_chapter.LimiterOrder);
+        }
+
+        public static void AquireMiniature(Serie serie)
+        {
+            Aquire(serie.Server, CancellationToken.None, Priority.Miniature, serie.LimiterOrder);
         }
 
         public static void Aquire(Server a_server)

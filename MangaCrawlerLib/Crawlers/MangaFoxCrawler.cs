@@ -23,7 +23,7 @@ namespace MangaCrawlerLib.Crawlers
             return "http://mangafox.me/favicon.ico";
         }
 
-        internal override string GetSerieMiniatureUrl(Serie serie)
+        protected override string _GetSerieMiniatureUrl(Serie serie)
         {
             var web = new HtmlWeb();
             var doc = web.Load(serie.URL);

@@ -19,10 +19,33 @@ namespace MangaCrawlerLib
             return string.Empty;
         }
 
-        internal virtual string GetSerieMiniatureUrl(Serie serie)
+        internal string GetSerieMiniatureUrl(Serie serie)
+        {
+            MiniatureAquire(serie);
+            try
+            {
+                return _GetSerieMiniatureUrl(serie);
+            }
+            finally
+            {
+                MiniatureRelease(serie);
+            }
+        }
+
+        protected virtual string _GetSerieMiniatureUrl(Serie serie)
         {
             return string.Empty;
         }
+
+        private void MiniatureAquire(Serie serie)
+        {
+            Limiter.AquireMiniature(serie);
+        }
+        private void MiniatureRelease(Serie serie)
+        {
+            Limiter.Release(serie);
+        }
+
 
         internal abstract void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback);
         internal abstract void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback);
