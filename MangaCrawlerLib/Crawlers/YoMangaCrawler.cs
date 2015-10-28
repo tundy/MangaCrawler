@@ -28,9 +28,23 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override string GetSerieMiniatureUrl(Serie serie)
         {
-            var web = new HtmlWeb();
-            var doc = web.Load(serie.URL);
-            var img = doc.DocumentNode.SelectSingleNode("//div[@class='comic_info']/div[@class='thumbnail']/img");
+            var doc = new HtmlDocument();
+            var request = (HttpWebRequest)WebRequest.Create(serie.URL);
+            request.Method = "GET";
+
+            using (var response = (HttpWebResponse)request.GetResponse())
+            {
+                using (var stream = response.GetResponseStream())
+                {
+                    if (stream != null && stream.CanRead)
+                    {
+                        var stremReader = new StreamReader(stream/*, Encoding.UTF8*/);
+                        doc.LoadHtml(stremReader.ReadToEnd());
+                    }
+                }
+            }
+            var info = doc.DocumentNode.SelectSingleNode("//div[@class='comic info']");
+            var img = info.SelectSingleNode("./div[@class='thumbnail']/img");
             return img.GetAttributeValue("src", "");
         }
 
