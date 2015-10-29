@@ -93,6 +93,7 @@
     <Compile Include="Crawlers\CrawlerList.cs" />
     <Compile Include="Crawlers\MangaHereCrawler.cs" />
     <Compile Include="Crawlers\MangaStreamCrawler.cs" />
+    <Compile Include="Crawlers\ReadMangaTodayCrawler.cs" />
     <Compile Include="Crawlers\TestServerCrawler.cs" />
     <Compile Include="Crawlers\YoMangaCrawler.cs" />
     <Compile Include="Entity.cs" />
