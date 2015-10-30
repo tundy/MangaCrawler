@@ -13,7 +13,14 @@ namespace MangaCrawlerLib
 {
     internal abstract class Crawler
     {
-        public Image DefaultImage = null;
+        public Image DefaultImage { get; protected set; } = null;
+
+        protected void SetDefaultImage(string uri)
+        {
+            var wc = new WebClient();
+            var img = Image.FromStream(wc.OpenRead(uri));
+            DefaultImage = Entity.ScaleImage(img, 96, 64);
+        }
 
         public abstract string Name { get; }
 

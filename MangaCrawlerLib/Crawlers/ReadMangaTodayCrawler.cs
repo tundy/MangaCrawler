@@ -35,6 +35,8 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
         {
+            SetDefaultImage("http://www.readmanga.today/assets/img/favicon.ico");
+
             var doc = DownloadDocument(a_serie);
             var ul = doc.DocumentNode.SelectSingleNode("//ul[@class='chp_lst']");
             var links = ul.SelectNodes(".//a");

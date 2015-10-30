@@ -21,9 +21,7 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
         {
-            var wc = new WebClient();
-            var img = Image.FromStream(wc.OpenRead("http://gameofscanlation.moe/android-icon-192x192.png"));
-            DefaultImage = Entity.ScaleImage(img, 96, 64);
+            SetDefaultImage("http://gameofscanlation.moe/android-icon-192x192.png");
 
             var result = from serie in DownloadDocument(a_server).DocumentNode.SelectSingleNode("//ul[@class='lst']").SelectNodes("./li")
                          let a = serie.SelectSingleNode("./a")
