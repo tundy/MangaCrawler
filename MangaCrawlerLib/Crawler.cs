@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.IO;
 using System.Threading;
 using System.Net;
 using HtmlAgilityPack;
-using System.Web;
 
 namespace MangaCrawlerLib
 {
@@ -88,7 +85,7 @@ namespace MangaCrawlerLib
         internal HtmlDocument DownloadDocument(Server a_server, string a_url = null, CookieContainer cookies = null)
         {
             return DownloadDocument(
-                (a_url == null) ? a_server.URL : a_url,
+                a_url ?? a_server.URL,
                 () => a_server.State = ServerState.Downloading,
                 () => Limiter.Aquire(a_server),
                 () => Limiter.Release(a_server),
@@ -98,7 +95,7 @@ namespace MangaCrawlerLib
         internal HtmlDocument DownloadDocument(Serie a_serie, string a_url = null, CookieContainer cookies = null)
         {
             return DownloadDocument(
-                (a_url == null) ? a_serie.URL : a_url, 
+                a_url ?? a_serie.URL, 
                 () => a_serie.State  = SerieState.Downloading, 
                 () => Limiter.Aquire(a_serie),
                 () => Limiter.Release(a_serie),
@@ -108,7 +105,7 @@ namespace MangaCrawlerLib
         internal HtmlDocument DownloadDocument(Chapter a_chapter, string a_url = null, CookieContainer cookies = null)
         {
             return DownloadDocument(
-                (a_url == null) ? a_chapter.URL : a_url, 
+                a_url ?? a_chapter.URL, 
                 () => a_chapter.State = ChapterState.DownloadingPagesList, 
                 () => Limiter.Aquire(a_chapter),
                 () => Limiter.Release(a_chapter), 
@@ -119,7 +116,7 @@ namespace MangaCrawlerLib
         internal HtmlDocument DownloadDocument(Page a_page, string a_url = null, CookieContainer cookies = null)
         {
             return DownloadDocument(
-                (a_url == null) ? a_page.URL : a_url, 
+                a_url ?? a_page.URL, 
                 () => a_page.State = PageState.Downloading, 
                 () => Limiter.Aquire(a_page),
                 () => Limiter.Release(a_page),
@@ -151,8 +148,7 @@ namespace MangaCrawlerLib
             {
                 a_aquire();
 
-                if (a_started != null)
-                    a_started();
+                a_started?.Invoke();
 
                 try
                 {
@@ -204,15 +200,15 @@ namespace MangaCrawlerLib
                     myReq.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
                     myReq.Referer = Uri.EscapeUriString(a_page.URL);
 
-                    byte[] buffer = new byte[4*1024];
+                    var buffer = new byte[4*1024];
 
-                    MemoryStream mem_stream = new MemoryStream();
+                    var mem_stream = new MemoryStream();
 
-                    using (Stream image_stream = myReq.GetResponse().GetResponseStream())
+                    using (var image_stream = myReq.GetResponse().GetResponseStream())
                     {
                         for (;;)
                         {
-                            int readed = image_stream.Read(buffer, 0, buffer.Length);
+                            var readed = image_stream.Read(buffer, 0, buffer.Length);
 
                             if (readed == 0)
                                 break;
@@ -235,13 +231,7 @@ namespace MangaCrawlerLib
             });
         }
 
-        public virtual int MaxConnectionsPerServer
-        {
-            get
-            {
-                return DownloadManager.Instance.MangaSettings.MaximumConnectionsPerServer;
-            }
-        }
+        public virtual int MaxConnectionsPerServer => DownloadManager.Instance.MangaSettings.MaximumConnectionsPerServer;
 
         public virtual string GetImageURLExtension(string a_image_url)
         {

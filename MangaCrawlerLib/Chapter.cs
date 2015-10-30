@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using System.Web;
 using System.Threading;
 using System.Diagnostics;
-using TomanuExtensions;
 using TomanuExtensions.Utils;
-using System.Collections.ObjectModel;
 using Ionic.Zip;
 using System.Threading.Tasks;
 
@@ -49,7 +46,7 @@ namespace MangaCrawlerLib
         private PagesCachedList m_pages;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private Object m_state_lock = new Object();
+        private object m_state_lock = new object();
 
         public Serie Serie { get; private set; }
         public string Title { get; internal set; }
@@ -92,13 +89,7 @@ namespace MangaCrawlerLib
         /// <summary>
         /// Thread safe.
         /// </summary>
-        public IList<Page> Pages
-        {
-            get
-            {
-                return m_pages;
-            }
-        }
+        public IList<Page> Pages => m_pages;
 
         public int PagesDownloaded
         {
@@ -108,37 +99,19 @@ namespace MangaCrawlerLib
             }
         }
 
-        public Server Server
-        {
-            get
-            {
-                return Serie.Server;
-            }
-        }
+        public Server Server => Serie.Server;
 
-        internal override Crawler Crawler
-        {
-            get
-            {
-                return Serie.Crawler;
-            }
-        }
+        internal override Crawler Crawler => Serie.Crawler;
 
-        public override bool IsDownloading
-        {
-            get
-            {
-                return (State == ChapterState.Waiting) ||
-                       (State == ChapterState.DownloadingPages) ||
-                       (State == ChapterState.DownloadingPagesList) ||
-                       (State == ChapterState.Cancelling) ||
-                       (State == ChapterState.Zipping);
-            }
-        }
+        public override bool IsDownloading => (State == ChapterState.Waiting) ||
+                                              (State == ChapterState.DownloadingPages) ||
+                                              (State == ChapterState.DownloadingPagesList) ||
+                                              (State == ChapterState.Cancelling) ||
+                                              (State == ChapterState.Zipping);
 
         public override string ToString()
         {
-            return String.Format("{0} - {1}", Serie, Title);
+            return $"{Serie} - {Title}";
         }
 
         public void CancelDownloading()
@@ -155,9 +128,9 @@ namespace MangaCrawlerLib
 
         public override string GetDirectory()
         {
-            string manga_root_dir = DownloadManager.Instance.MangaSettings.GetMangaRootDir(true);
+            var mangaRootDir = DownloadManager.Instance.MangaSettings.GetMangaRootDir(true);
 
-            return manga_root_dir +
+            return mangaRootDir +
                    Path.DirectorySeparatorChar +
                    FileUtils.RemoveInvalidFileCharacters(Serie.Server.Name) +
                    Path.DirectorySeparatorChar +
@@ -196,22 +169,22 @@ namespace MangaCrawlerLib
                     DownloadPagesList();
 
                     var names = Pages.Select(p => p.Name);
-                    var sorted_names = Pages.Select(p => p.Name).OrderBy(n => n, new NaturalOrderStringComparer());
-                    bool error = false;
+                    var sortedNames = Pages.Select(p => p.Name).OrderBy(n => n, new NaturalOrderStringComparer());
+                    var error = false;
 
-                    PageNamingStrategy pns = DownloadManager.Instance.MangaSettings.PageNamingStrategy;
+                    var pns = DownloadManager.Instance.MangaSettings.PageNamingStrategy;
                     if (pns == PageNamingStrategy.IndexToPreserveOrder)
                     {
-                        if (!names.SequenceEqual(sorted_names))
+                        if (!names.SequenceEqual(sortedNames))
                             pns = PageNamingStrategy.AlwaysUseIndex;
                     }
                     else if (pns == PageNamingStrategy.PrefixToPreserverOrder)
                     {
-                        if (!names.SequenceEqual(sorted_names))
+                        if (!names.SequenceEqual(sortedNames))
                             pns = PageNamingStrategy.AlwaysUsePrefix;
                     }
 
-                    for (int i = 0; i < Pages.Count; i++)
+                    for (var i = 0; i < Pages.Count; i++)
                     {
                         Pages[i].LimiterOrder = Catalog.NextID();
 
@@ -238,9 +211,7 @@ namespace MangaCrawlerLib
                             }
                             catch (Exception ex2)
                             {
-                                Loggers.MangaCrawler.Error(String.Format(
-                                    "Exception #1, chapter: {0} state: {1}",
-                                    this, State), ex2);
+                                Loggers.MangaCrawler.Error($"Exception #1, chapter: {this} state: {State}", ex2);
 
                                 error = true;
                             }
@@ -278,8 +249,7 @@ namespace MangaCrawlerLib
             }
             catch (Exception ex1)
             {
-                Loggers.MangaCrawler.Error(String.Format(
-                    "Exception #2, chapter: {0} state: {1}", this, State), ex1);
+                Loggers.MangaCrawler.Error($"Exception #2, chapter: {this} state: {State}", ex1);
 
                 State = ChapterState.Error;
 
@@ -289,8 +259,7 @@ namespace MangaCrawlerLib
                 }
                 catch (Exception ex2)
                 {
-                    Loggers.MangaCrawler.Error(String.Format(
-                        "Exception #3, chapter: {0} state: {1}", this, State), ex2);
+                    Loggers.MangaCrawler.Error($"Exception #3, chapter: {this} state: {State}", ex2);
                 }
             }
             finally
@@ -312,10 +281,10 @@ namespace MangaCrawlerLib
 
         public bool CanReadCBZ()
         {
-            return File.Exists(this.Serie.GetDirectory() + "/" + this.Title + ".cbz");
+            return File.Exists(Serie.GetDirectory() + "/" + Title + ".cbz");
         }
 
-        public string PathCBZ() => this.Serie.GetDirectory() + "/" + this.Title + ".cbz";
+        public string PathCBZ() => Serie.GetDirectory() + "/" + Title + ".cbz";
 
         private void CreateCBZ()
         {
@@ -335,11 +304,13 @@ namespace MangaCrawlerLib
 
             var dir = new DirectoryInfo(Pages.First().ImageFilePath).Parent;
 
-            var zip_file = dir.FullName + ".cbz";
+            Debug.Assert(dir != null, "dir != null");
+            // ReSharper disable once PossibleNullReferenceException
+            var zipFile = dir.FullName + ".cbz";
 
             try
             {
-                using (ZipFile zip = new ZipFile())
+                using (var zip = new ZipFile())
                 {
                     zip.AlternateEncodingUsage = ZipOption.AsNecessary;
                     zip.AlternateEncoding = Encoding.UTF8;
@@ -351,39 +322,28 @@ namespace MangaCrawlerLib
                         Token.ThrowIfCancellationRequested();
                     }
 
-                    zip.Save(zip_file);
+                    zip.Save(zipFile);
                 }
 
-                if (DownloadManager.Instance.MangaSettings.DeleteDirWithImagesWhenCBZ)
+                if (!DownloadManager.Instance.MangaSettings.DeleteDirWithImagesWhenCBZ) return;
+                foreach (var page in Pages.Where(page => !string.IsNullOrWhiteSpace(page.ImageFilePath)).Where(page => File.Exists(page.ImageFilePath)))
                 {
-                    foreach (var page in Pages)
-                    {
-                        if (!String.IsNullOrWhiteSpace(page.ImageFilePath))
-                            if (File.Exists(page.ImageFilePath))
-                                File.Delete(page.ImageFilePath);
-                    }
-
-                    if (!Directory.EnumerateFiles(GetDirectory()).Any())
-                        if (!Directory.EnumerateDirectories(GetDirectory()).Any())
-                            Directory.Delete(GetDirectory());
+                    File.Delete(page.ImageFilePath);
                 }
+
+                if (Directory.EnumerateFiles(GetDirectory()).Any()) return;
+                if (!Directory.EnumerateDirectories(GetDirectory()).Any())
+                    Directory.Delete(GetDirectory());
             }
             catch (Exception ex)
             {
                 State = ChapterState.Error;
 
-                Loggers.MangaCrawler.Error(String.Format(
-                        "Exception, chapter: {0} state: {1}", this, State), ex);
+                Loggers.MangaCrawler.Error($"Exception, chapter: {this} state: {State}", ex);
             }
         }
 
-        internal CancellationToken Token
-        {
-            get
-            {
-                return m_cancellation_token_source.Token;
-            }
-        }
+        internal CancellationToken Token => m_cancellation_token_source.Token;
 
         public ChapterState State
         {
@@ -463,7 +423,7 @@ namespace MangaCrawlerLib
                         }
                         default:
                         {
-                            throw new InvalidOperationException(String.Format("Unknown state: {0}", value));
+                            throw new InvalidOperationException($"Unknown state: {value}");
                         }
                     }
 
@@ -474,23 +434,19 @@ namespace MangaCrawlerLib
 
         public bool CanReadFirstPage()
         {
-            if (Pages.Any())
-            {
-                if (!String.IsNullOrWhiteSpace(Pages.First().ImageFilePath))
-                {
-                    try
-                    {
-                        if (new FileInfo(Pages.First().ImageFilePath).Exists)
-                            return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        Loggers.MangaCrawler.Error(String.Format(
-                            "Exception, chapter: {0} state: {1}", this, State), ex);
+            if (!Pages.Any()) return CanReadCBZ();
+            if (string.IsNullOrWhiteSpace(Pages.First().ImageFilePath)) return CanReadCBZ();
 
-                        return false;
-                    }
-                }
+            try
+            {
+                if (new FileInfo(Pages.First().ImageFilePath).Exists)
+                    return true;
+            }
+            catch (Exception ex)
+            {
+                Loggers.MangaCrawler.Error($"Exception, chapter: {this} state: {State}", ex);
+
+                return false;
             }
 
             return CanReadCBZ();
