@@ -1,18 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Xml;
 using System.Net;
 using System.IO;
-using System.Collections.Concurrent;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Web.UI.WebControls;
-using System.Windows.Forms;
-using HtmlAgilityPack;
-using TomanuExtensions;
 using HtmlDocument = HtmlAgilityPack.HtmlDocument;
 
 namespace MangaCrawlerLib.Crawlers

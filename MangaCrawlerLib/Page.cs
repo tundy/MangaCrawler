@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.IO;
-using System.Net;
-using System.Web;
 using System.Diagnostics;
-using System.Threading;
 using TomanuExtensions.Utils;
 
 namespace MangaCrawlerLib
@@ -57,34 +52,15 @@ namespace MangaCrawlerLib
                 Name = Index.ToString();
         }
 
-        internal override Crawler Crawler
-        {
-            get
-            {
-                return Chapter.Crawler;
-            }
-        }
+        internal override Crawler Crawler => Chapter.Crawler;
 
-        public Server Server
-        {
-            get
-            {
-                return Chapter.Server;
-            }
-        }
+        public Server Server => Chapter.Server;
 
-        public Serie Serie
-        {
-            get
-            {
-                return Chapter.Serie;
-            }
-        }
+        public Serie Serie => Chapter.Serie;
 
         public override string ToString()
         {
-            return String.Format("{0} - {1}/{2}",
-                    Chapter, Index, Chapter.Pages.Count);
+            return $"{Chapter} - {Index}/{Chapter.Pages.Count}";
         }
 
         internal void GetImageURL()
@@ -103,11 +79,11 @@ namespace MangaCrawlerLib
         {
             new DirectoryInfo(Chapter.GetDirectory()).Create();
 
-            FileInfo temp_file = new FileInfo(Path.GetTempFileName());
+            var temp_file = new FileInfo(Path.GetTempFileName());
 
             try
             {
-                using (FileStream file_stream = new FileStream(temp_file.FullName, FileMode.Create))
+                using (var file_stream = new FileStream(temp_file.FullName, FileMode.Create))
                 {
                     MemoryStream ms;
 
@@ -147,14 +123,14 @@ namespace MangaCrawlerLib
                     }
                 }
 
-                string file_name = Rename(a_pns, Name);
+                var file_name = Rename(a_pns, Name);
 
                 ImageFilePath = Path.Combine(
                     Chapter.GetDirectory(),
                     FileUtils.RemoveInvalidFileCharacters(
                         Path.GetFileNameWithoutExtension(file_name) + Crawler.GetImageURLExtension(ImageURL).ToLower()));
 
-                FileInfo image_file = new FileInfo(ImageFilePath);
+                var image_file = new FileInfo(ImageFilePath);
 
                 if (image_file.Exists)
                     image_file.Delete();
@@ -176,16 +152,19 @@ namespace MangaCrawlerLib
             Debug.Assert((a_pns != PageNamingStrategy.IndexToPreserveOrder) || 
                          (a_pns != PageNamingStrategy.PrefixToPreserverOrder));
 
-            string index = Index.ToString();
+            var index = Index.ToString();
             if (DownloadManager.Instance.MangaSettings.PadPageNamesWithZeros)
                 index = index.PadLeft(Chapter.Pages.Count.ToString().Length, '0');
 
-            if (a_pns == PageNamingStrategy.AlwaysUseIndex)
-                return index;
-            else if (a_pns == PageNamingStrategy.AlwaysUsePrefix)
-                return String.Format("{0} - {1}", index, Name);
-            else
-                return a_name;
+            switch (a_pns)
+            {
+                case PageNamingStrategy.AlwaysUseIndex:
+                    return index;
+                case PageNamingStrategy.AlwaysUsePrefix:
+                    return $"{index} - {Name}";
+                default:
+                    return a_name;
+            }
         }
 
         internal bool RequiredDownload(string a_chapter_dir)
@@ -194,6 +173,7 @@ namespace MangaCrawlerLib
             {
                 if (ImageFilePath == null)
                     return true;
+                // ReSharper disable once PossibleNullReferenceException
                 if (new FileInfo(ImageFilePath).Directory.FullName + "\\" != a_chapter_dir)
                     return true;
                 if (!new FileInfo(ImageFilePath).Exists)
@@ -204,10 +184,7 @@ namespace MangaCrawlerLib
                 byte[] hash;
                 TomanuExtensions.Utils.Hash.CalculateSHA256(new FileInfo(ImageFilePath).OpenRead(), out hash);
 
-                if (!Hash.SequenceEqual(hash))
-                    return true;
-
-                return false;
+                return !Hash.SequenceEqual(hash);
             }
             catch (Exception ex)
             {
@@ -251,7 +228,7 @@ namespace MangaCrawlerLib
                     }
                     default:
                     {
-                        throw new InvalidOperationException(String.Format("Unknown state: {0}", value));
+                        throw new InvalidOperationException($"Unknown state: {value}");
                     }
                 }
 
@@ -259,14 +236,8 @@ namespace MangaCrawlerLib
             }
         }
 
-        public override bool IsDownloading
-        {
-            get
-            {
-                return (State == PageState.Downloading) ||
-                       (State == PageState.Waiting);
-            }
-        }
+        public override bool IsDownloading => (State == PageState.Downloading) ||
+                                              (State == PageState.Waiting);
 
         public override string GetDirectory()
         {

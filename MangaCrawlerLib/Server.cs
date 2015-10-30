@@ -1,14 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Web;
 using System.Diagnostics;
-using TomanuExtensions;
-using System.Threading;
 using MangaCrawlerLib.Crawlers;
-using System.Collections.ObjectModel;
-using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
 using TomanuExtensions.Utils;
@@ -96,42 +90,25 @@ namespace MangaCrawlerLib
                 m_state = ServerState.Initial;
         }
 
-        internal override Crawler Crawler
-        {
-            get
-            {
-                if (m_crawler == null)
-                    m_crawler = CrawlerList.Get(this);
-
-                return m_crawler;
-            }
-        }
+        internal override Crawler Crawler => m_crawler ?? (m_crawler = CrawlerList.Get(this));
 
         /// <summary>
         /// Thread safe.
         /// </summary>
-        public IList<Serie> Series 
-        {
-            get
-            {
-                return m_series;
-            }
-        }
+        public IList<Serie> Series => m_series;
 
         internal void ResetCheckDate()
         {
             m_check_date_time = DateTime.MinValue;
 
-            if (m_series.Filled)
-            {
-                foreach (var serie in Series)
-                    serie.ResetCheckDate();
-            }
+            if (!m_series.Filled) return;
+            foreach (var serie in Series)
+                serie.ResetCheckDate();
         }
 
         internal void DownloadSeries()
         {
-            Object locker = new Object();
+            var locker = new object();
 
             try
             {
@@ -162,8 +139,7 @@ namespace MangaCrawlerLib
             }
             catch (Exception ex)
             {
-                Loggers.MangaCrawler.Error(String.Format(
-                    "Exception, server: {0} state: {1}", this, State), ex);
+                Loggers.MangaCrawler.Error($"Exception, server: {this} state: {State}", ex);
                 State = ServerState.Error;
             }
 
@@ -172,7 +148,7 @@ namespace MangaCrawlerLib
             m_check_date_time = DateTime.Now;
         }
 
-        private static List<Serie> EliminateDoubles(List<Serie> a_series)
+        private static IEnumerable<Serie> EliminateDoubles(List<Serie> a_series)
         {
             var same_name_same_url = (from serie in a_series
                                       group serie by new { serie.Title, serie.URL } into gr
@@ -189,13 +165,13 @@ namespace MangaCrawlerLib
 
             foreach (var gr in same_name_diff_url)
             {
-                int index = 1;
+                var index = 1;
 
                 foreach (var serie in gr)
                 {
                     for (; ; )
                     {
-                        string new_title = String.Format("{0} ({1})", serie.Title, index);
+                        string new_title = $"{serie.Title} ({index})";
                         index++;
 
                         if (a_series.Any(ch => ch.Title == new_title))
@@ -212,7 +188,7 @@ namespace MangaCrawlerLib
 
         public override string ToString()
         {
-            return String.Format("{0} - {1}", ID, Name);
+            return $"{ID} - {Name}";
         }
 
         public bool IsDownloadRequired(bool a_force)
@@ -221,10 +197,7 @@ namespace MangaCrawlerLib
             {
                 if (!a_force)
                 {
-                    if (DateTime.Now - m_check_date_time > DownloadManager.Instance.MangaSettings.CheckTimePeriod)
-                        return true;
-                    else
-                        return false;
+                    return DateTime.Now - m_check_date_time > DownloadManager.Instance.MangaSettings.CheckTimePeriod;
                 }
                 else
                     return true;
@@ -235,7 +208,7 @@ namespace MangaCrawlerLib
 
         public override string GetDirectory()
         {
-            string manga_root_dir = DownloadManager.Instance.MangaSettings.GetMangaRootDir(true); ;
+            var manga_root_dir = DownloadManager.Instance.MangaSettings.GetMangaRootDir(true); ;
 
             return manga_root_dir +
                    Path.DirectorySeparatorChar +
@@ -284,7 +257,7 @@ namespace MangaCrawlerLib
                     }
                     default:
                     {
-                        throw new InvalidOperationException(String.Format("Unknown state: {0}", value));
+                        throw new InvalidOperationException($"Unknown state: {value}");
                     }
                 }
 
@@ -292,13 +265,7 @@ namespace MangaCrawlerLib
             }
         }
 
-        public override bool IsDownloading
-        {
-            get
-            {
-                return (State == ServerState.Downloading) ||
-                       (State == ServerState.Waiting);
-            }
-        }
+        public override bool IsDownloading => (State == ServerState.Downloading) ||
+                                              (State == ServerState.Waiting);
     }
 }

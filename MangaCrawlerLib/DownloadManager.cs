@@ -1,18 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.IO;
-using System.Threading;
-using Ionic.Zip;
-using System.Resources;
-using System.Diagnostics;
-using System.Collections.Concurrent;
 using HtmlAgilityPack;
-using TomanuExtensions;
-using System.Collections.ObjectModel;
 using MangaCrawlerLib.Crawlers;
 
 namespace MangaCrawlerLib
@@ -57,7 +46,7 @@ namespace MangaCrawlerLib
         {
             lock (m_downloading)
             {
-                bool result = m_downloading.Any();
+                var result = m_downloading.Any();
 
                 if (a_reset_state)
                 {
@@ -149,7 +138,7 @@ namespace MangaCrawlerLib
             {
                 foreach (var chapter in a_chapters)
                 {
-                    Chapter chapter_sync = chapter;
+                    var chapter_sync = chapter;
 
                     new Task(() =>
                     {

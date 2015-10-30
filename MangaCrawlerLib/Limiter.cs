@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace MangaCrawlerLib
 {
@@ -24,10 +22,10 @@ namespace MangaCrawlerLib
         #region Limit
         private class Limit : IDisposable
         {
-            public Priority Priority { get; private set; }
-            public AutoResetEvent Event { get; private set; }
-            public Server Server { get; private set; }
-            public ulong LimiterOrder { get; private set; }
+            public readonly Priority Priority;
+            public readonly AutoResetEvent Event;
+            public readonly Server Server;
+            public readonly ulong LimiterOrder;
 
             public Limit(Priority a_priority, Server a_server, ulong a_limiter_order)
             {
@@ -39,7 +37,7 @@ namespace MangaCrawlerLib
 
             public override string ToString()
             {
-                return String.Format("Server: {0}, Priority: {1}, LimitOrder: {2}", Server.ID, Priority, LimiterOrder);
+                return $"Server: {Server.ID}, Priority: {Priority}, LimitOrder: {LimiterOrder}";
             }
 
             public void Dispose()
@@ -67,9 +65,11 @@ namespace MangaCrawlerLib
                 s_one_chapter_per_server[server] = false;
             }
 
-            Thread loop_thread = new Thread(Loop);
-            loop_thread.Name = "Limiter";
-            loop_thread.IsBackground = true;
+            var loop_thread = new Thread(Loop)
+            {
+                Name = "Limiter",
+                IsBackground = true
+            };
             loop_thread.Start();
 
         }
@@ -106,7 +106,7 @@ namespace MangaCrawlerLib
 
         private static void Aquire(Server a_server, CancellationToken a_token, Priority a_priority, ulong a_limiter_order)
         {
-            using (Limit limit = new Limit(a_priority, a_server, a_limiter_order))
+            using (var limit = new Limit(a_priority, a_server, a_limiter_order))
             {
                 lock (s_limits)
                 {
@@ -118,11 +118,9 @@ namespace MangaCrawlerLib
                 {
                     lock (s_limits)
                     {
-                        if (a_token.IsCancellationRequested)
-                        {
-                            s_limits.Remove(limit);
-                            a_token.ThrowIfCancellationRequested();
-                        }
+                        if (!a_token.IsCancellationRequested) continue;
+                        s_limits.Remove(limit);
+                        a_token.ThrowIfCancellationRequested();
                     }
                 }
             }
@@ -138,35 +136,32 @@ namespace MangaCrawlerLib
                 {
                     for (; ; )
                     {
-                        Limit limit = GetLimit();
+                        var limit = GetLimit();
 
-                        if (limit != null)
+                        if (limit == null)
                         {
-                            if (limit.Priority == Priority.Pages)
-                            {
-                                Debug.Assert(!s_one_chapter_per_server[limit.Server]);
-                                s_one_chapter_per_server[limit.Server] = true;
-                            }
-                            else
-                            {
-                                if (limit.Priority == Priority.Image)
-                                    Debug.Assert(s_one_chapter_per_server[limit.Server]);
-                                
-                                s_connections++;
-                                s_server_connections[limit.Server]++;
-
-                                Debug.Assert(s_connections <=
-                                    DownloadManager.Instance.MangaSettings.MaximumConnections);
-                                Debug.Assert(s_server_connections[limit.Server] <=
-                                    limit.Server.Crawler.MaxConnectionsPerServer);
-                            }
-
-                            limit.Event.Set();
-
-                            continue;
+                            break;
+                        }
+                        if (limit.Priority == Priority.Pages)
+                        {
+                            Debug.Assert(!s_one_chapter_per_server[limit.Server]);
+                            s_one_chapter_per_server[limit.Server] = true;
                         }
                         else
-                            break;
+                        {
+                            if (limit.Priority == Priority.Image)
+                                Debug.Assert(s_one_chapter_per_server[limit.Server]);
+                                
+                            s_connections++;
+                            s_server_connections[limit.Server]++;
+
+                            Debug.Assert(s_connections <=
+                                         DownloadManager.Instance.MangaSettings.MaximumConnections);
+                            Debug.Assert(s_server_connections[limit.Server] <=
+                                         limit.Server.Crawler.MaxConnectionsPerServer);
+                        }
+
+                        limit.Event.Set();
                     }
                 }
             }

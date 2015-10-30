@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using MangaCrawlerLib.Crawlers;
 using System.Xml.Linq;
 using TomanuExtensions;
 using System.IO;
 using TomanuExtensions.Utils;
 using System.Xml;
-using System.Threading;
-using System.Diagnostics;
 using Ionic.Zlib;
 
 namespace MangaCrawlerLib
@@ -147,7 +144,7 @@ namespace MangaCrawlerLib
             }
 
             IDCounter = 0;
-            List<Server> servers = GetServers().ToList();
+            var servers = GetServers().ToList();
 
             try
             {
@@ -173,9 +170,9 @@ namespace MangaCrawlerLib
                                    where servers.Any(s => s.Name == server.Name)
                                    select server).ToList();
 
-                for (int i=0; i<servers.Count; i++)
+                for (var i=0; i<servers.Count; i++)
                 {
-                    Server cs = catalog_servers.FirstOrDefault(s => s.Name == servers[i].Name);
+                    var cs = catalog_servers.FirstOrDefault(s => s.Name == servers[i].Name);
 
                     if (cs == null)
                         continue;
@@ -295,14 +292,14 @@ namespace MangaCrawlerLib
 
         internal static List<Serie> LoadServerSeries(Server a_server)
         {
-            XDocument xml = LoadCatalogXml(a_server.ID);
+            var xml = LoadCatalogXml(a_server.ID);
 
             if (xml == null)
                 return new List<Serie>();
 
             try
             {
-                XElement root = xml.Element(Nodes.SERVER_SERIES_NODE);
+                var root = xml.Element(Nodes.SERVER_SERIES_NODE);
 
                 var series = from serie in root.Element(Nodes.SERIES_NODE).Elements(Nodes.SERIE_NODE)
                              select new
@@ -359,14 +356,14 @@ namespace MangaCrawlerLib
 
         internal static List<Chapter> LoadSerieChapters(Serie a_serie)
         {
-            XDocument xml = LoadCatalogXml(a_serie.ID);
+            var xml = LoadCatalogXml(a_serie.ID);
 
             if (xml == null)
                 return new List<Chapter>();
 
             try
             {
-                XElement root = xml.Element(Nodes.SERIE_CHAPTERS_NODE);
+                var root = xml.Element(Nodes.SERIE_CHAPTERS_NODE);
 
                 var chapters = from chapter in root.Element(Nodes.CHAPTERS_NODE).Elements(Nodes.CHAPTER_NODE)
                                select new
@@ -424,14 +421,14 @@ namespace MangaCrawlerLib
 
         internal static List<Page> LoadChapterPages(Chapter a_chapter)
         {
-            XDocument xml = LoadCatalogXml(a_chapter.ID);
+            var xml = LoadCatalogXml(a_chapter.ID);
 
             if (xml == null)
                 return new List<Page>();
 
             try
             {
-                XElement root = xml.Element(Nodes.CHAPTER_PAGES_NODE);
+                var root = xml.Element(Nodes.CHAPTER_PAGES_NODE);
 
                 var pages = from page in root.Element(Nodes.PAGES_NODE).Elements(Nodes.PAGE_NODE)
                             select new
@@ -534,14 +531,14 @@ namespace MangaCrawlerLib
 
             try
             {
-                XElement root = XmlLoad(DownloadingsFile).Element(Nodes.DOWNLOADINGS_NODE);
+                var root = XmlLoad(DownloadingsFile).Element(Nodes.DOWNLOADINGS_NODE);
 
-                List<Chapter> downloadings = new List<Chapter>();
+                var downloadings = new List<Chapter>();
 
                 foreach (var chapter in root.Elements(Nodes.DOWNLOADING_CHAPTER_ID_NODE))
                 {
-                    ulong chapter_id = UInt64.Parse(chapter.Value);
-                    Chapter ch = LoadChapter(chapter_id);
+                    var chapter_id = UInt64.Parse(chapter.Value);
+                    var ch = LoadChapter(chapter_id);
 
                     if (ch == null)
                         continue;
@@ -582,7 +579,7 @@ namespace MangaCrawlerLib
 
         private static Serie LoadSerie(ulong a_serie_id)
         {
-            XDocument doc = LoadCatalogXml(a_serie_id);
+            var doc = LoadCatalogXml(a_serie_id);
 
             if (doc == null)
                 return null;
@@ -602,7 +599,7 @@ namespace MangaCrawlerLib
                 return null;
             }
 
-            Server server = LoadServer(server_id);
+            var server = LoadServer(server_id);
 
             if (server == null)
                 return null;
@@ -612,7 +609,7 @@ namespace MangaCrawlerLib
 
         private static Chapter LoadChapter(ulong a_chapter_id)
         {
-            XDocument doc = LoadCatalogXml(a_chapter_id);
+            var doc = LoadCatalogXml(a_chapter_id);
 
             if (doc == null)
                 return null;
@@ -632,7 +629,7 @@ namespace MangaCrawlerLib
                 return null;
             }
 
-            Serie serie = LoadSerie(serie_id);
+            var serie = LoadSerie(serie_id);
 
             if (serie == null)
                 return null;
@@ -652,14 +649,14 @@ namespace MangaCrawlerLib
 
             try
             {
-                XElement root = XmlLoad(BookmarksFile).Element(Nodes.BOOKMARKS_NODE);
+                var root = XmlLoad(BookmarksFile).Element(Nodes.BOOKMARKS_NODE);
 
-                List<Serie> bookmarks = new List<Serie>();
+                var bookmarks = new List<Serie>();
 
                 foreach (var bookmark in root.Elements(Nodes.BOOKMARK_SERIE_ID_NODE))
                 {
-                    ulong serie_id = UInt64.Parse(bookmark.Value);
-                    Serie serie = LoadSerie(serie_id);
+                    var serie_id = UInt64.Parse(bookmark.Value);
+                    var serie = LoadSerie(serie_id);
 
                     if (serie == null)
                         continue;

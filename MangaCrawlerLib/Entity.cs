@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using TomanuExtensions;
 using System.IO;
 using System.Net;
-using System.Threading.Tasks;
 using System.Web;
-using System.Web.UI.WebControls;
-using Image = System.Drawing.Image;
 
 namespace MangaCrawlerLib
 {
@@ -101,19 +94,19 @@ namespace MangaCrawlerLib
         {
             if (a_obj == null)
                 return false;
-            Entity entity = a_obj as Entity;
-            if (Object.ReferenceEquals(entity, null))
+            var entity = a_obj as Entity;
+            if (ReferenceEquals(entity, null))
                 return false;
             return this == entity;
         }
 
         public static bool operator ==(Entity a_left, Entity a_right)
         {
-            if (Object.ReferenceEquals(a_left, a_right))
+            if (ReferenceEquals(a_left, a_right))
                 return true;
-            if (Object.ReferenceEquals(a_left, null))
+            if (ReferenceEquals(a_left, null))
                 return false;
-            if (Object.ReferenceEquals(a_right, null))
+            if (ReferenceEquals(a_right, null))
                 return false;
             return a_left.ID == a_right.ID;
         }

@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using HtmlAgilityPack;
-using System.Threading;
 using TomanuExtensions;
-using System.IO;
-using System.Net;
 
 namespace MangaCrawlerLib.Crawlers
 {
@@ -22,7 +18,7 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
         {
-            HtmlDocument doc = DownloadDocument(a_server);
+            var doc = DownloadDocument(a_server);
 
             var series = doc.DocumentNode.SelectNodes("//table[@class='datalist']/tr[@class='datarow']");
 
@@ -38,8 +34,8 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
         {
-            string url = String.Format("{0}/chapter-001/page001.html", a_serie.URL);
-            HtmlDocument doc = DownloadDocument(a_serie);
+            string url = $"{a_serie.URL}/chapter-001/page001.html";
+            var doc = DownloadDocument(a_serie);
 
             var chapters = doc.DocumentNode.SelectNodes("//table[@class='datalist']/tr/td[4]/a");
 
@@ -55,23 +51,23 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
         {
-            HtmlDocument doc = DownloadDocument(a_chapter);
+            var doc = DownloadDocument(a_chapter);
 
             var pages = doc.DocumentNode.SelectNodes("//select[@name='pagejump']/option");
 
             var result = new List<Page>();
 
-            int index = 0;
+            var index = 0;
             foreach (var page in pages)
             {
                 index++;
 
-                string link = a_chapter.URL;
-                int page_index = link.LastIndexOf("/page");
+                var link = a_chapter.URL;
+                var page_index = link.LastIndexOf("/page");
                 link = link.Left(page_index + 5);
                 link += page.GetAttributeValue("Value", "") + ".html";
 
-                Page pi = new Page(a_chapter, link, index, "");
+                var pi = new Page(a_chapter, link, index, "");
 
                 result.Add(pi);
             }
@@ -84,9 +80,9 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override string GetImageURL(Page a_page)
         {
-            HtmlDocument doc = DownloadDocument(a_page);
+            var doc = DownloadDocument(a_page);
 
-            HtmlNode node = doc.DocumentNode.SelectSingleNode("//div[@id='page']/a/img");
+            var node = doc.DocumentNode.SelectSingleNode("//div[@id='page']/a/img");
 
             if (node != null)
                 return node.GetAttributeValue("src", "");

@@ -64,7 +64,7 @@ namespace MangaCrawlerLib
         {
             WebException ex1 = null;
 
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 try
                 {
@@ -193,7 +193,7 @@ namespace MangaCrawlerLib
                 {
                     Limiter.Aquire(a_page);
 
-                    HttpWebRequest myReq = (HttpWebRequest)WebRequest.Create(
+                    var myReq = (HttpWebRequest)WebRequest.Create(
                         Uri.EscapeUriString(a_page.ImageURL));
 
                     myReq.UserAgent = DownloadManager.Instance.MangaSettings.UserAgent;

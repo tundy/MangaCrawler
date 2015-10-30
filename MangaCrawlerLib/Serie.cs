@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Web;
 using System.Diagnostics;
-using System.Collections.ObjectModel;
-using System.Drawing;
-using System.Threading;
 using System.IO;
 using System.Threading.Tasks;
 using TomanuExtensions.Utils;
@@ -66,7 +61,7 @@ namespace MangaCrawlerLib
 
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private Object m_lock = new Object();
+        private object m_lock = new object();
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private SerieState m_state;
@@ -110,21 +105,9 @@ namespace MangaCrawlerLib
         /// <summary>
         /// Thread safe.
         /// </summary>
-        public IList<Chapter> Chapters
-        {
-            get
-            {
-                return m_chapters;
-            }
-        }
+        public IList<Chapter> Chapters => m_chapters;
 
-        internal override Crawler Crawler
-        {
-            get
-            {
-                return Server.Crawler;
-            }
-        }
+        internal override Crawler Crawler => Server.Crawler;
 
         internal void ResetCheckDate()
         {
@@ -133,7 +116,7 @@ namespace MangaCrawlerLib
 
         internal void DownloadChapters()
         {
-            Object locker = new Object();
+            var locker = new object();
 
             try
             {
@@ -168,8 +151,7 @@ namespace MangaCrawlerLib
             {
                 State = SerieState.Error;
 
-                Loggers.MangaCrawler.Error(
-                    String.Format("Exception #1, serie: {0} state: {1}", this, State), ex1);
+                Loggers.MangaCrawler.Error($"Exception #1, serie: {this} state: {State}", ex1);
 
                 try
                 {
@@ -177,8 +159,7 @@ namespace MangaCrawlerLib
                 }
                 catch (Exception ex2)
                 {
-                    Loggers.MangaCrawler.Error(
-                        String.Format("Exception #2, serie: {0} state: {1}", this, State), ex2);
+                    Loggers.MangaCrawler.Error($"Exception #2, serie: {this} state: {State}", ex2);
                 }
             }
 
@@ -189,7 +170,7 @@ namespace MangaCrawlerLib
 
         public override string ToString()
         {
-            return String.Format("{0} - {1}", Server.Name, Title);
+            return $"{Server.Name} - {Title}";
         }
 
         private static List<Chapter> EliminateDoubles(List<Chapter> a_chapters)
@@ -209,13 +190,13 @@ namespace MangaCrawlerLib
 
             foreach (var gr in same_name_diff_url)
             {
-                int index = 1;
+                var index = 1;
 
                 foreach (var chapter in gr)
                 {
                     for (;;)
                     {
-                        string new_title = String.Format("{0} ({1})", chapter.Title, index);
+                        string new_title = $"{chapter.Title} ({index})";
                         index++;
 
                         if (a_chapters.Any(ch => ch.Title == new_title))
@@ -234,17 +215,9 @@ namespace MangaCrawlerLib
         {
             if (State == SerieState.Downloaded)
             {
-                if (!a_force)
-                {
-                    if (DateTime.Now - m_check_date_time > DownloadManager.Instance.MangaSettings.CheckTimePeriod)
-                        return true;
-                    else
-                        return false;
-                }
-                return true;
+                return a_force || DateTime.Now - m_check_date_time > DownloadManager.Instance.MangaSettings.CheckTimePeriod;
             }
-            else
-                return (State == SerieState.Error) || (State == SerieState.Initial);
+            return (State == SerieState.Error) || (State == SerieState.Initial);
         }
 
         public SerieState State
@@ -288,7 +261,7 @@ namespace MangaCrawlerLib
                     }
                     default:
                     {
-                        throw new InvalidOperationException(String.Format("Unknown state: {0}", value));
+                        throw new InvalidOperationException($"Unknown state: {value}");
                     }
                 }
 
@@ -298,7 +271,7 @@ namespace MangaCrawlerLib
 
         public override string GetDirectory()
         {
-            string manga_root_dir = DownloadManager.Instance.MangaSettings.GetMangaRootDir(true); ;
+            var manga_root_dir = DownloadManager.Instance.MangaSettings.GetMangaRootDir(true); ;
 
             return manga_root_dir +
                    Path.DirectorySeparatorChar +
@@ -308,22 +281,10 @@ namespace MangaCrawlerLib
                    Path.DirectorySeparatorChar;
         }
 
-        public override bool IsDownloading
-        {
-            get
-            {
-                return (State == SerieState.Downloading) ||
-                       (State == SerieState.Waiting);
-            }
-        }
+        public override bool IsDownloading => (State == SerieState.Downloading) ||
+                                              (State == SerieState.Waiting);
 
-        public bool IsBookmarked
-        {
-            get
-            {
-                return DownloadManager.Instance.Bookmarks.List.Contains(this);
-            }
-        }
+        public bool IsBookmarked => DownloadManager.Instance.Bookmarks.List.Contains(this);
 
         public IEnumerable<Chapter> GetNewChapters()
         {

@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using System.Reflection;
 using System.IO;
-using System.Drawing;
-using MangaCrawlerLib;
 using TomanuExtensions;
 using System.Xml.Linq;
 
@@ -56,7 +50,7 @@ namespace MangaCrawlerLib
 
         public string GetMangaRootDir(bool a_remove_slash_on_end)
         {
-            string result = m_manga_root_dir;
+            var result = m_manga_root_dir;
 
             if (a_remove_slash_on_end)
             {

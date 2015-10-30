@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 
@@ -24,7 +23,7 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
         {
-            HtmlDocument doc = DownloadDocument(a_server);
+            var doc = DownloadDocument(a_server);
 
             var series = doc.DocumentNode.SelectNodes("//div[@class='list_manga']/ul/li/a");
 
@@ -36,7 +35,7 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
         {
-            HtmlDocument doc = DownloadDocument(a_serie);
+            var doc = DownloadDocument(a_serie);
 
             var chapters = doc.DocumentNode.SelectNodes("//div[@class='detail_list']/ul/li/span/a");
 
@@ -68,7 +67,7 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
         {
-            HtmlDocument doc = DownloadDocument(a_chapter);
+            var doc = DownloadDocument(a_chapter);
 
             var pages = doc.DocumentNode.SelectNodes("//section[@class='readpage_top']/div[3]/span/select/option");
 
@@ -92,7 +91,7 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override string GetImageURL(Page a_page)
         {
-            HtmlDocument doc = DownloadDocument(a_page);
+            var doc = DownloadDocument(a_page);
             var image = doc.DocumentNode.SelectSingleNode("//img[@id='image']");
             return image.GetAttributeValue("src", "");
         }

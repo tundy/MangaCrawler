@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using HtmlAgilityPack;
-using System.Text.RegularExpressions;
-using System.Xml;
-using System.Net;
-using System.IO;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Threading;
@@ -32,16 +27,14 @@ namespace MangaCrawlerLib.Crawlers
         internal override void DownloadSeries(Server a_server, 
             Action<int, IEnumerable<Serie>> a_progress_callback)
         {
-            HtmlDocument doc = DownloadDocument(a_server);
+            var doc = DownloadDocument(a_server);
 
-            List<string> pages = new List<string>();
+            var pages = new List<string>();
 
             Func<object, string> prepare_page_url = index =>
-                 String.Format(
-                    "http://www.mangavolume.com/manga-archive/mangas/npage-{0}",
-                    index);
+                $"http://www.mangavolume.com/manga-archive/mangas/npage-{index}";
 
-            int current_page = 1;
+            var current_page = 1;
             pages.Add(a_server.URL);
 
             for (;;)
@@ -80,11 +73,11 @@ namespace MangaCrawlerLib.Crawlers
                 doc = DownloadDocument(a_server, next_pages_group);
             }
 
-            ConcurrentBag<Tuple<int, int, string, string>> series =
+            var series =
                 new ConcurrentBag<Tuple<int, int, string, string>>();
 
             pages = pages.Distinct().ToList();
-            int series_progress = 0;
+            var series_progress = 0;
 
             Action<int> update = (progress) =>
             {
@@ -106,15 +99,15 @@ namespace MangaCrawlerLib.Crawlers
                 {
                     IEnumerable<HtmlNode> page_series = null;
 
-                    HtmlDocument page_doc = DownloadDocument(
+                    var page_doc = DownloadDocument(
                         a_server, page);
                     page_series = page_doc.DocumentNode.SelectNodes(
                         "//table[@id='MostPopular']/tr/td/a");
 
-                    int index = 0;
+                    var index = 0;
                     foreach (var serie in page_series)
                     {
-                        Tuple<int, int, string, string> s =
+                        var s =
                             new Tuple<int, int, string, string>((int)page_index, index++, 
                                 serie.SelectSingleNode("span").InnerText,
                                 "http://www.mangavolume.com" + serie.GetAttributeValue("href", ""));
@@ -138,9 +131,9 @@ namespace MangaCrawlerLib.Crawlers
         internal override void DownloadChapters(Serie a_serie, Action<int, 
             IEnumerable<Chapter>> a_progress_callback)
         {
-            HtmlDocument doc = DownloadDocument(a_serie);
+            var doc = DownloadDocument(a_serie);
 
-            List<string> pages = new List<string>();
+            var pages = new List<string>();
             pages.Add(a_serie.URL);
 
             var license = doc.DocumentNode.SelectSingleNode("//div[@id='LicenseWarning']");
@@ -174,8 +167,7 @@ namespace MangaCrawlerLib.Crawlers
                                select "http://www.mangavolume.com" + 
                                node.GetAttributeValue("href", ""));
 
-                string next_pages_group = String.Format("{0}npage-{1}", a_serie.URL, 
-                    Int32.Parse(nodes.Last().InnerText) + 1);
+                string next_pages_group = $"{a_serie.URL}npage-{Int32.Parse(nodes.Last().InnerText) + 1}";
 
                 doc = DownloadDocument(a_serie, next_pages_group);
 
@@ -186,10 +178,10 @@ namespace MangaCrawlerLib.Crawlers
 
             pages = pages.Distinct().ToList();
 
-            ConcurrentBag<Tuple<int, int, string, string>> chapters =
+            var chapters =
                 new ConcurrentBag<Tuple<int, int, string, string>>();
 
-            int chapters_progress = 0;
+            var chapters_progress = 0;
 
             Action<int> update = (progress) =>
             {
@@ -200,7 +192,7 @@ namespace MangaCrawlerLib.Crawlers
                 a_progress_callback(progress, result.ToArray());
             };
 
-            bool empty = false;
+            var empty = false;
 
             Parallel.For(0, pages.Count,
                 new ParallelOptions()
@@ -211,7 +203,7 @@ namespace MangaCrawlerLib.Crawlers
             {
                 try
                 {
-                    HtmlDocument page_doc = 
+                    var page_doc = 
                         DownloadDocument(a_serie, pages[page]);
 
                     var page_series = page_doc.DocumentNode.SelectNodes(
@@ -246,10 +238,10 @@ namespace MangaCrawlerLib.Crawlers
                         }
                     }
 
-                    int index = 0;
+                    var index = 0;
                     foreach (var serie in page_series)
                     {
-                        Tuple<int, int, string, string> s =
+                        var s =
                             new Tuple<int, int, string, string>(page, index++, serie.InnerText,
                                 "http://www.mangavolume.com" + serie.GetAttributeValue("href", ""));
 
@@ -275,21 +267,20 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
         {
-            HtmlDocument doc = DownloadDocument(a_chapter);
+            var doc = DownloadDocument(a_chapter);
 
             var pages = doc.DocumentNode.SelectNodes("//select[@id='pages']/option");
 
             var result = new List<Page>();
 
-            int index = 0;
+            var index = 0;
             foreach (var page in pages)
             {
                 index++;
 
-                Page pi = new Page(
+                var pi = new Page(
                     a_chapter,
-                    String.Format("http://www.mangavolume.com{0}", 
-                        page.GetAttributeValue("value", "")),
+                    $"http://www.mangavolume.com{page.GetAttributeValue("value", "")}",
                     index, 
                     "");
 
@@ -304,7 +295,7 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override string GetImageURL(Page a_page)
         {
-            HtmlDocument doc = DownloadDocument(a_page);
+            var doc = DownloadDocument(a_page);
 
             var img = doc.DocumentNode.SelectSingleNode(
                 "/html[1]/body[1]/div[1]/div[3]/div[1]/table[2]/tr[5]/td[1]/a[1]/img[1]");

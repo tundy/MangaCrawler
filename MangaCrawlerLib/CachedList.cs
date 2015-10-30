@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using TomanuExtensions;
 
 namespace MangaCrawlerLib
 {
@@ -32,7 +30,7 @@ namespace MangaCrawlerLib
             foreach (var el in m_list.Except(a_new))
                 list.Remove(el);
 
-            int index = 0;
+            var index = 0;
             foreach (var el in a_new)
             {
                 if (list.Count == index)
@@ -67,11 +65,11 @@ namespace MangaCrawlerLib
         private static void Merge(List<T> a_new, List<T> a_local,
             Func<T, string> a_key_selector, Merge<T> a_merge)
         {         
-            Dictionary<string, T> local_dict = a_local.ToDictionary(a_key_selector);
+            var local_dict = a_local.ToDictionary(a_key_selector);
 
-            for (int i = 0; i < a_new.Count; i++)
+            for (var i = 0; i < a_new.Count; i++)
             {
-                string key = a_key_selector(a_new[i]);
+                var key = a_key_selector(a_new[i]);
                 if (local_dict.ContainsKey(key))
                 {
                     a_merge(local_dict[key], a_new[i]);
@@ -187,7 +185,7 @@ namespace MangaCrawlerLib
             if (list == null)
                 return "Uninitialized";
             else
-                return String.Format("Count: {0}", list.Count);
+                return $"Count: {list.Count}";
         }
 
         protected abstract void EnsureLoaded();

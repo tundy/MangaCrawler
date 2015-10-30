@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using HtmlAgilityPack;
-using System.Threading;
-using TomanuExtensions;
-using System.Diagnostics;
 
 namespace MangaCrawlerLib.Crawlers
 {
@@ -27,15 +23,15 @@ namespace MangaCrawlerLib.Crawlers
         internal override void DownloadSeries(Server a_server, Action<int, 
             IEnumerable<Serie>> a_progress_callback)
         {
-            HtmlDocument doc = DownloadDocument(a_server);
+            var doc = DownloadDocument(a_server);
 
             var series = doc.DocumentNode.SelectNodes("//div[@class='mangaJump']/select").Elements().ToList();
 
-            for (int i = series.Count - 1; i >= 0; i--)
+            for (var i = series.Count - 1; i >= 0; i--)
             {
                 if (series[i].NodeType != HtmlNodeType.Text)
                     continue;
-                string str = series[i].InnerText;
+                var str = series[i].InnerText;
                 str = str.Trim();
                 str = str.Replace("\n", "");
                 if (str == "")
@@ -45,15 +41,15 @@ namespace MangaCrawlerLib.Crawlers
             var splitter = series.FirstOrDefault(s => s.InnerText.Contains("---"));
             if (splitter != null)
             {
-                int splitter_index = series.IndexOf(splitter);
+                var splitter_index = series.IndexOf(splitter);
                 series.RemoveRange(0, splitter_index + 1);
             }
 
-            List<Serie> result = new List<Serie>();
+            var result = new List<Serie>();
 
-            for (int i = 0; i < series.Count; i += 2)
+            for (var i = 0; i < series.Count; i += 2)
             {
-                Serie si = new Serie(
+                var si = new Serie(
                     a_server,
                     "http://www.thespectrum.net" + series[i].GetAttributeValue("value", ""), 
                     series[i + 1].InnerText);
@@ -66,7 +62,7 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
         {
-            HtmlDocument doc = DownloadDocument(a_serie);
+            var doc = DownloadDocument(a_serie);
 
             var nodes = doc.DocumentNode.SelectNodes("//b");
             var node = nodes.Where(n => n.InnerText.StartsWith("Current Status")).FirstOrDefault();
@@ -125,13 +121,13 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
         {
-            HtmlDocument doc = DownloadDocument(a_chapter);
+            var doc = DownloadDocument(a_chapter);
 
             var pages = doc.DocumentNode.SelectNodes("//select[@name='page']/option");
 
             var result = new List<Page>();
 
-            int index = 0;
+            var index = 0;
             foreach (var page in pages)
             {
                 index++;
@@ -149,7 +145,7 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override string GetImageURL(Page a_page)
         {
-            HtmlDocument doc = DownloadDocument(a_page);
+            var doc = DownloadDocument(a_page);
             var img = doc.DocumentNode.SelectSingleNode("//div[@class='imgContainer']/a/img");
             return img.GetAttributeValue("src", "");
         }

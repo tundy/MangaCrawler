@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using HtmlAgilityPack;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
-using TomanuExtensions;
 using System.Threading;
 using System.Text.RegularExpressions;
 
@@ -66,7 +64,7 @@ namespace MangaCrawlerLib.Crawlers
                         var url = GetServerURL();
                         if (page > 0)
                         {
-                            url += String.Format("?page={0}", page);
+                            url += $"?page={page}";
                         }
 
                         var page_doc = DownloadDocument(a_server, url);
@@ -101,7 +99,7 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
         {
-            HtmlDocument doc = DownloadDocument(a_serie);
+            var doc = DownloadDocument(a_serie);
 
             var chapters = doc.DocumentNode.SelectNodes("//table[@class='listing']/tr/td/a");
 
@@ -137,13 +135,13 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
         {
-            HtmlDocument doc = DownloadDocument(a_chapter);
+            var doc = DownloadDocument(a_chapter);
 
             var pages = doc.DocumentNode.SelectNodes("//div[@id='divImage']/p/img").Count();
 
             var result = new List<Page>();
 
-            for (int page = 1; page <= pages; page++)
+            for (var page = 1; page <= pages; page++)
             {
                 result.Add(
                     new Page(

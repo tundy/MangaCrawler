@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using HtmlAgilityPack;
 using System.Text.RegularExpressions;
 using System.IO;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Threading;
-using TomanuExtensions;
 
 namespace MangaCrawlerLib.Crawlers
 {
@@ -38,7 +36,7 @@ namespace MangaCrawlerLib.Crawlers
         internal override void DownloadSeries(Server a_server, Action<int, 
             IEnumerable<Serie>> a_progress_callback)
         {
-            HtmlDocument doc = DownloadDocument(a_server);
+            var doc = DownloadDocument(a_server);
 
             var series = doc.DocumentNode.SelectNodes(
                 "//div/div/table/tr/td/a");
@@ -55,12 +53,12 @@ namespace MangaCrawlerLib.Crawlers
         internal override void DownloadChapters(Serie a_serie, Action<int, 
             IEnumerable<Chapter>> a_progress_callback)
         {
-            HtmlDocument doc = DownloadDocument(a_serie);
+            var doc = DownloadDocument(a_serie);
 
             var chapters_or_volumes_enum =
                 doc.DocumentNode.SelectNodes("//table[@class='snif']/tr/td/a");
 
-            int chapters_progress = 0;
+            var chapters_progress = 0;
 
             if (chapters_or_volumes_enum == null)
             {
@@ -73,7 +71,7 @@ namespace MangaCrawlerLib.Crawlers
                 }
             }
 
-            ConcurrentBag<Tuple<int, int, Chapter>> chapters = 
+            var chapters = 
                 new ConcurrentBag<Tuple<int, int, Chapter>>();
 
             var chapters_or_volumes =
@@ -97,7 +95,7 @@ namespace MangaCrawlerLib.Crawlers
             {
                 try
                 {
-                    List<Chapter> result = SearchChaptersOrVolumes(a_serie, chapter_or_volume);
+                    var result = SearchChaptersOrVolumes(a_serie, chapter_or_volume);
 
                     foreach (var ch in result)
                     {
@@ -126,10 +124,10 @@ namespace MangaCrawlerLib.Crawlers
 
         private List<Chapter> SearchChaptersOrVolumes(Serie a_serie, HtmlNode a_chapter_or_volume)
         {
-            HtmlDocument doc = DownloadDocument(a_serie, 
+            var doc = DownloadDocument(a_serie, 
                 a_chapter_or_volume.GetAttributeValue("href", ""));
 
-            List<Chapter> result = new List<Chapter>();
+            var result = new List<Chapter>();
 
             var chapter = doc.DocumentNode.SelectNodes(
                 "/html/body/center/div/div[2]/div/fieldset/ul/label/a");
@@ -169,19 +167,19 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
         {
-            HtmlDocument doc = DownloadDocument(a_chapter);
+            var doc = DownloadDocument(a_chapter);
 
             var pages = doc.DocumentNode.SelectNodes(
                 "/html/body/center/div/div[2]/div/fieldset/ul/label/a");
 
             var result = new List<Page>();
 
-            int index = 0;
+            var index = 0;
             foreach (var page in pages)
             {
                 index++;
 
-                Page pi = new Page(a_chapter, page.GetAttributeValue("href", ""), index, 
+                var pi = new Page(a_chapter, page.GetAttributeValue("href", ""), index, 
                     Path.GetFileNameWithoutExtension(page.InnerText));
 
                 result.Add(pi);
@@ -195,13 +193,13 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override string GetImageURL(Page a_page)
         {
-            HtmlDocument doc = DownloadDocument(a_page);
+            var doc = DownloadDocument(a_page);
             var nodes = doc.DocumentNode.SelectNodes("//div[@id='contentRH']/div/script");
 
             foreach (var node in nodes)
             {
-                string script = node.InnerText;
-                string url = Regex.Match(script, ".*SRC=\"(.*)\".*").Groups[1].Value;
+                var script = node.InnerText;
+                var url = Regex.Match(script, ".*SRC=\"(.*)\".*").Groups[1].Value;
 
                 if (!String.IsNullOrWhiteSpace(url))
                     return url;
