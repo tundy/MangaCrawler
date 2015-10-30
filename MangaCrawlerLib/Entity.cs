@@ -30,7 +30,7 @@ namespace MangaCrawlerLib
         public MiniatureStatus MiniatureState { get; internal set; } = MiniatureStatus.None ;
         public Image Miniature { get; protected internal set; }
 
-        private static Image ScaleImage(Image image, int maxWidth, int maxHeight)
+        internal static Image ScaleImage(Image image, int maxWidth, int maxHeight)
         {
             if(image == null) throw new ArgumentNullException(nameof(image));
             var ratioX = (double)maxWidth / image.Width;
@@ -74,6 +74,11 @@ namespace MangaCrawlerLib
         {
             if(bmp == null) throw new ArgumentNullException(nameof(bmp));
             Miniature = bmp;
+        }
+        internal virtual void SetMiniature(Image img)
+        {
+            if (img == null) throw new ArgumentNullException(nameof(img));
+            Miniature = img;
         }
         internal virtual void SetMiniature(string uri)
         {

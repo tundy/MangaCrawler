@@ -54,6 +54,10 @@ namespace MangaCrawlerLib
                 {
                     //SetMiniature(new Bitmap(32, 32));
                     MiniatureState = MiniatureStatus.Error;
+                    if (Server.Crawler.DefaultImage != null)
+                    {
+                        SetMiniature(Server.Crawler.DefaultImage);
+                    }
                     throw;
                 }
                 MiniatureState = MiniatureStatus.Loaded;

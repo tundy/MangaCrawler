@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -25,6 +27,10 @@ namespace MangaCrawlerLib.Crawlers
 
         internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
         {
+            var wc = new WebClient();
+            var img = Image.FromStream(wc.OpenRead("http://gameofscanlation.moe/android-icon-192x192.png"));
+            DefaultImage = Entity.ScaleImage(img, 96, 64);
+
             var li = (from l in DownloadDocument(a_server).DocumentNode.SelectNodes("//li")
                       where l.InnerText.TrimStart().StartsWith("Series &#038; Releases")
                       select l.SelectNodes("./ul/li")).First();
