@@ -1,43 +1,60 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using HtmlAgilityPack;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using TomanuExtensions;
 using System.Threading;
+using HtmlAgilityPack;
 
 namespace MangaCrawlerLib.Crawlers
 {
     internal class AnimeaCrawler : Crawler
     {
-        public override string Name
-        {
-            get 
-            {
-                return "Animea";
-            }
-        }
+        public override string Name => "Animea";
 
-        internal override string GetServerMiniatureUrl()
-        {
-            return "http://www.anime-source.com/icon.ico";
-        }
+        internal override string GetServerMiniatureUrl() => "http://www.anime-source.com/icon.ico";
 
         internal override void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback)
         {
             var doc = DownloadDocument(server);
 
-            var last_page = int.Parse(
-                doc.DocumentNode.SelectNodes("//ul[@class='paging']//li/a").Reverse().
-                    Skip(1).First().InnerText);
+            string url;
+            if (server.URL.StartsWith("http://"))
+            {
+                url = server.URL.Substring("http://".Length, server.URL.Length - "http://".Length);
+                url = "http://" + url.Substring(0, url.IndexOf('/'));
+            }
+            else
+            {
+                url = server.URL.Substring(0, server.URL.IndexOf('/'));
+            }
 
-            var series =
-                new ConcurrentBag<Tuple<int, int, string, string>>();
+            var links = doc.DocumentNode.SelectNodes("//a[@class='tooltip_manga book_closed']");
 
-            var series_progress = 0;
+            var result = from a in links
+                         let link = a.GetAttributeValue("href", "")
+                         where !string.IsNullOrEmpty(link) && link != "/.html"
+                         select new Serie(server, url + link, a.InnerText);
 
-            Action<int> update = (progress) =>
+            progressCallback(100, result);
+
+            /*var halfPages = doc.DocumentNode.SelectNodes("//div[@class='maincontent']/div[@class='full-page']/div[@class='half-page']");
+            var uls = new List<HtmlNode>();
+
+            foreach (var halfpage in halfPages)
+            {
+                var ul = halfpage.SelectNodes(".//ul[@class='mangalisttext']");
+                uls.AddRange(ul);
+            }
+
+
+            var series = new ConcurrentBag<Tuple<int, int, string, string>>();
+
+            var seriesProgress = 0;
+            var lastPage = uls.Count;
+
+            Action<int> update = progress =>
             {
                 var result = from serie in series
                              orderby serie.Item1, serie.Item2
@@ -46,7 +63,72 @@ namespace MangaCrawlerLib.Crawlers
                 progressCallback(progress, result.ToArray());
             };
 
-            Parallel.For(0, last_page,
+
+            Parallel.For(0, lastPage,
+                new ParallelOptions()
+                {
+                    MaxDegreeOfParallelism = MaxConnectionsPerServer
+                },
+                (page, state) =>
+                {
+                    try
+                    {
+                        {
+
+                            var i = 0;
+                            var ul = uls[page];
+                            //foreach (var ul in uls)
+                            {
+                                var links = ul.SelectNodes(".//a");
+                                foreach (var m in links)
+                                {
+                                    var link = m.GetAttributeValue("href", "");
+                                    if (!string.IsNullOrEmpty(link) && link != "/.html")
+                                    {
+                                        series.Add(new Tuple<int, int, string, string>(page, i++, m.InnerText, url + link));
+                                    }
+                                }
+                                Interlocked.Increment(ref seriesProgress);
+                                update(seriesProgress / lastPage * 100 );
+                            }
+
+                        }
+                    }
+                    catch
+                    {
+                        state.Break();
+                        throw;
+                    }
+                });
+
+
+            update(100);
+        }*/
+
+            /*
+        internal override void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback)
+        {
+            var doc = DownloadDocument(server);
+
+            var lastPage = int.Parse(
+                doc.DocumentNode.SelectNodes("//ul[@class='paging']//li/a").Reverse().
+                    Skip(1).First().InnerText);
+
+            var series =
+                new ConcurrentBag<Tuple<int, int, string, string>>();
+
+            var seriesProgress = 0;
+
+            Action<int> update = progress =>
+            {
+                var result = from serie in series
+                             orderby serie.Item1, serie.Item2
+                             select new Serie(server, serie.Item4, serie.Item3);
+
+                progressCallback(progress, result.ToArray());
+            };
+
+            Parallel.For(0, lastPage,
                 new ParallelOptions()
                 {
                     MaxDegreeOfParallelism = MaxConnectionsPerServer
@@ -59,25 +141,25 @@ namespace MangaCrawlerLib.Crawlers
                         if (page > 0)
                             url += $"?page={page}";
 
-                        var page_doc = DownloadDocument(
+                        var pageDoc = DownloadDocument(
                             server, url);
 
-                        var page_series = page_doc.DocumentNode.SelectNodes(
+                        var pageSeries = pageDoc.DocumentNode.SelectNodes(
                             "//ul[@class='mangalist']/li/div/a");
                        
-                        for (var i = 0; i < page_series.Count; i++)
+                        for (var i = 0; i < pageSeries.Count; i++)
                         {
                             var s = new Tuple<int, int, string, string>(
                                 page, 
                                 i, 
-                                page_series[i].InnerText, 
-                                "http://manga.animea.net" + page_series[i].GetAttributeValue("href", ""));
+                                pageSeries[i].InnerText, 
+                                "http://manga.animea.net" + pageSeries[i].GetAttributeValue("href", ""));
 
                             series.Add(s);
                         }
 
-                        Interlocked.Increment(ref series_progress);
-                        update(series_progress * 100 / last_page);
+                        Interlocked.Increment(ref seriesProgress);
+                        update(seriesProgress * 100 / lastPage);
                     }
                     catch
                     {
@@ -86,47 +168,77 @@ namespace MangaCrawlerLib.Crawlers
                     }
                 });
 
-            update(100);
+            update(100);*/
+        }
+        
+
+        protected override string _GetSerieMiniatureUrl(Serie serie)
+        {
+
+            var web = new HtmlWeb();
+            var doc = web.Load(serie.URL);
+            var img = doc.DocumentNode.SelectSingleNode("//img[@class='cover_mp']");
+            return img.GetAttributeValue("src", "");
         }
 
-        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> progressCallback)
+        internal override void DownloadChapters(Serie serie, Action<int, IEnumerable<Chapter>> progressCallback)
         {
-            var doc = DownloadDocument(a_serie);
-
-            var chapters = doc.DocumentNode.SelectNodes("//ul[@class='chapters_list']/li/a");
-
-            if (chapters == null)
+            var doc = DownloadDocument(serie);
+            var ul = doc.DocumentNode.SelectSingleNode("//ul[@class='chapterlistfull']");
+            var links = ul.SelectNodes(".//a");
+            if (links == null)
             {
-                if (doc.DocumentNode.SelectSingleNode("//ul[@class='chapters_list']/li[@class='notice']").
-                    InnerText.Contains("No chapters found"))
-                {
-                    progressCallback(100, new Chapter[0]);
-                    return;
-                }
-
-                if (doc.DocumentNode.SelectSingleNode("//ul[@class='chapters_list']/li[@class='notice']").
-                    InnerText.Contains("This manga has been licensed and is not available for "))
-                {
-                    progressCallback(100, new Chapter[0]);
-                    return;
-                }
-                
-                var mature_skip_link = doc.DocumentNode.SelectSingleNode("//li[@class='notice']/strong/a");
-                a_serie.URL = a_serie.URL + mature_skip_link.GetAttributeValue("href", "");
-                DownloadChapters(a_serie, progressCallback);
-                return;
+                throw new Exception("Serie has no chapters");
             }
 
-            var result = (from chapter in chapters
-                          select new Chapter(
-                              a_serie,
-                              "http://manga.animea.net" + chapter.GetAttributeValue("href", ""), 
-                              chapter.InnerText)).ToList();
 
+            string url;
+            if (serie.Server.URL.StartsWith("http://"))
+            {
+                url = serie.Server.URL.Substring("http://".Length, serie.Server.URL.Length - "http://".Length);
+                url = "http://" + url.Substring(0, url.IndexOf('/'));
+            }
+            else
+            {
+                url = serie.Server.URL.Substring(0, serie.Server.URL.IndexOf('/'));
+            }
+
+            var result = from a in links select new Chapter(serie, url + a.GetAttributeValue("href", ""), a.InnerText);
             progressCallback(100, result);
 
-            if (result.Count == 0)
-                throw new Exception("Serie has no chapters");
+            /*while (true)
+            {
+                var doc = DownloadDocument(serie);
+
+                var chapters = doc.DocumentNode.SelectNodes("//ul[@class='chapters_list']/li/a");
+
+                if (chapters == null)
+                {
+                    if (doc.DocumentNode.SelectSingleNode("//ul[@class='chapters_list']/li[@class='notice']").InnerText.Contains("No chapters found"))
+                    {
+                        progressCallback(100, new Chapter[0]);
+                        return;
+                    }
+
+                    if (doc.DocumentNode.SelectSingleNode("//ul[@class='chapters_list']/li[@class='notice']").InnerText.Contains("This manga has been licensed and is not available for "))
+                    {
+                        progressCallback(100, new Chapter[0]);
+                        return;
+                    }
+
+                    var mature_skip_link = doc.DocumentNode.SelectSingleNode("//li[@class='notice']/strong/a");
+                    serie.URL = serie.URL + mature_skip_link.GetAttributeValue("href", "");
+                    continue;
+                }
+
+                var result = (from chapter in chapters select new Chapter(serie, "http://manga.animea.net" + chapter.GetAttributeValue("href", ""), chapter.InnerText)).ToList();
+
+                progressCallback(100, result);
+
+                if (result.Count == 0)
+                    throw new Exception("Serie has no chapters");
+                break;
+            }*/
         }
 
         internal override IEnumerable<Page> DownloadPages(Chapter chapter)
@@ -156,11 +268,7 @@ namespace MangaCrawlerLib.Crawlers
             return result;
         }
 
-        public override string GetServerURL()
-        {
-            //return "http://manga.animea.net/browse.html";
-            return "http://manga.animea.net/series_old.php";
-        }
+        public override string GetServerURL() => "http://manga.animea.net/series_old.php"; //http://manga.animea.net/browse.html
 
         internal override string GetImageURL(Page page)
         {

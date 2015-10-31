@@ -63,8 +63,25 @@ namespace MangaCrawlerLib
 
         private static void Merge(IList<T> @new, IEnumerable<T> local,
             Func<T, string> keySelector, Merge<T> merge)
-        {         
-            var localDict = local.ToDictionary(keySelector);
+        {
+            Dictionary<string, T> localDict = null;
+            try
+            {
+                localDict = local.ToDictionary(keySelector);
+            }
+            catch (ArgumentException)
+            {
+                var localLook = local.ToLookup(keySelector);
+
+                for (var i = 0; i < @new.Count; i++)
+                {
+                    var key = keySelector(@new[i]);
+                    if (!localLook.Contains(key)) continue;
+                    merge(localLook[key].First(), @new[i]);
+                    @new[i] = localLook[key].First();
+                }
+                return;
+            }
 
             for (var i = 0; i < @new.Count; i++)
             {
