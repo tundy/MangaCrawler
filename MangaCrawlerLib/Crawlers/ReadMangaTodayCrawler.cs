@@ -89,7 +89,7 @@ namespace MangaCrawlerLib.Crawlers
 
             var series = new ConcurrentBag<Tuple<int, int, string, string>>();
 
-            var series_progress = 0;
+            var seriesProgress = 0;
 
             Action<int> update = progress =>
             {
@@ -100,9 +100,9 @@ namespace MangaCrawlerLib.Crawlers
                 progressCallback(progress, result.ToArray());
             };
 
-            var last_page = links.Count;
+            var lastPage = links.Count;
 
-            Parallel.For(0, last_page,
+            Parallel.For(0, lastPage,
                 new ParallelOptions()
                 {
                     MaxDegreeOfParallelism = MaxConnectionsPerServer
@@ -123,8 +123,8 @@ namespace MangaCrawlerLib.Crawlers
                                 series.Add(new Tuple<int, int, string, string>(page, i++, m.InnerText, m.GetAttributeValue("href", "")));
                             }
 
-                            Interlocked.Increment(ref series_progress);
-                            update(series_progress * 100 / last_page);
+                            Interlocked.Increment(ref seriesProgress);
+                            update(seriesProgress * 100 / lastPage);
                         }
                     }
                     catch
