@@ -27,12 +27,12 @@ namespace MangaCrawlerLib
             public readonly Server Server;
             public readonly ulong LimiterOrder;
 
-            public Limit(Priority a_priority, Server a_server, ulong a_limiter_order)
+            public Limit(Priority a_priority, Server server, ulong limiterOrder)
             {
                 Event = new AutoResetEvent(false);
                 Priority = a_priority;
-                Server = a_server;
-                LimiterOrder = a_limiter_order;
+                Server = server;
+                LimiterOrder = limiterOrder;
             }
 
             public override string ToString()
@@ -47,36 +47,36 @@ namespace MangaCrawlerLib
         }
         #endregion
 
-        private static List<Limit> s_limits = new List<Limit>();
-        private static AutoResetEvent s_loop_event = new AutoResetEvent(true);
+        private static readonly List<Limit> Limits = new List<Limit>();
+        private static readonly AutoResetEvent LoopEvent = new AutoResetEvent(true);
 
-        private const int LOOP_SLEEP_MS = 500;
-        private const int WAIT_SLEEP_MS = 500;
+        private const int LoopSleepMs = 500;
+        private const int WaitSleepMs = 500;
 
-        private static Dictionary<Server, int> s_server_connections = new Dictionary<Server, int>();
-        private static Dictionary<Server, bool> s_one_chapter_per_server = new Dictionary<Server, bool>();
-        private static int s_connections = 0;
+        private static readonly Dictionary<Server, int> ServerConnections = new Dictionary<Server, int>();
+        private static readonly Dictionary<Server, bool> OneChapterPerServer = new Dictionary<Server, bool>();
+        private static int _connections;
 
         static Limiter()
         {
             foreach (var server in DownloadManager.Instance.Servers)
             {
-                s_server_connections[server] = 0;
-                s_one_chapter_per_server[server] = false;
+                ServerConnections[server] = 0;
+                OneChapterPerServer[server] = false;
             }
 
-            var loop_thread = new Thread(Loop)
+            var loopThread = new Thread(Loop)
             {
                 Name = "Limiter",
                 IsBackground = true
             };
-            loop_thread.Start();
+            loopThread.Start();
 
         }
 
-        public static void BeginChapter(Chapter a_chapter)
+        public static void BeginChapter(Chapter chapter)
         {
-            Aquire(a_chapter.Server, a_chapter.Token, Priority.Pages, a_chapter.LimiterOrder);
+            Aquire(chapter.Server, chapter.Token, Priority.Pages, chapter.LimiterOrder);
         }
 
         public static void AquireMiniature(Serie serie)
@@ -84,43 +84,43 @@ namespace MangaCrawlerLib
             Aquire(serie.Server, CancellationToken.None, Priority.Miniature, serie.LimiterOrder);
         }
 
-        public static void Aquire(Server a_server)
+        public static void Aquire(Server server)
         {
-            Aquire(a_server, CancellationToken.None, Priority.Series, a_server.LimiterOrder);
+            Aquire(server, CancellationToken.None, Priority.Series, server.LimiterOrder);
         }
 
-        public static void Aquire(Serie a_serie)
+        public static void Aquire(Serie serie)
         {
-            Aquire(a_serie.Server, CancellationToken.None, Priority.Chapters, a_serie.LimiterOrder);
+            Aquire(serie.Server, CancellationToken.None, Priority.Chapters, serie.LimiterOrder);
         }
 
-        public static void Aquire(Chapter a_chapter)
+        public static void Aquire(Chapter chapter)
         {
-            Aquire(a_chapter.Server, a_chapter.Token, Priority.Image, a_chapter.LimiterOrder);
+            Aquire(chapter.Server, chapter.Token, Priority.Image, chapter.LimiterOrder);
         }
 
-        public static void Aquire(Page a_page)
+        public static void Aquire(Page page)
         {
-            Aquire(a_page.Server, a_page.Chapter.Token, Priority.Image, a_page.LimiterOrder);
+            Aquire(page.Server, page.Chapter.Token, Priority.Image, page.LimiterOrder);
         }
 
-        private static void Aquire(Server a_server, CancellationToken a_token, Priority a_priority, ulong a_limiter_order)
+        private static void Aquire(Server server, CancellationToken cancellationToken, Priority priority, ulong limiterOrder)
         {
-            using (var limit = new Limit(a_priority, a_server, a_limiter_order))
+            using (var limit = new Limit(priority, server, limiterOrder))
             {
-                lock (s_limits)
+                lock (Limits)
                 {
-                    s_limits.Add(limit);
+                    Limits.Add(limit);
                 }
-                s_loop_event.Set();
+                LoopEvent.Set();
 
-                while (!limit.Event.WaitOne(WAIT_SLEEP_MS))
+                while (!limit.Event.WaitOne(WaitSleepMs))
                 {
-                    lock (s_limits)
+                    lock (Limits)
                     {
-                        if (!a_token.IsCancellationRequested) continue;
-                        s_limits.Remove(limit);
-                        a_token.ThrowIfCancellationRequested();
+                        if (!cancellationToken.IsCancellationRequested) continue;
+                        Limits.Remove(limit);
+                        cancellationToken.ThrowIfCancellationRequested();
                     }
                 }
             }
@@ -130,9 +130,9 @@ namespace MangaCrawlerLib
         {
             for (; ; )
             {
-                s_loop_event.WaitOne(LOOP_SLEEP_MS);
+                LoopEvent.WaitOne(LoopSleepMs);
 
-                lock (s_limits)
+                lock (Limits)
                 {
                     for (; ; )
                     {
@@ -144,20 +144,20 @@ namespace MangaCrawlerLib
                         }
                         if (limit.Priority == Priority.Pages)
                         {
-                            Debug.Assert(!s_one_chapter_per_server[limit.Server]);
-                            s_one_chapter_per_server[limit.Server] = true;
+                            Debug.Assert(!OneChapterPerServer[limit.Server]);
+                            OneChapterPerServer[limit.Server] = true;
                         }
                         else
                         {
                             if (limit.Priority == Priority.Image)
-                                Debug.Assert(s_one_chapter_per_server[limit.Server]);
+                                Debug.Assert(OneChapterPerServer[limit.Server]);
                                 
-                            s_connections++;
-                            s_server_connections[limit.Server]++;
+                            _connections++;
+                            ServerConnections[limit.Server]++;
 
-                            Debug.Assert(s_connections <=
+                            Debug.Assert(_connections <=
                                          DownloadManager.Instance.MangaSettings.MaximumConnections);
-                            Debug.Assert(s_server_connections[limit.Server] <=
+                            Debug.Assert(ServerConnections[limit.Server] <=
                                          limit.Server.Crawler.MaxConnectionsPerServer);
                         }
 
@@ -167,71 +167,71 @@ namespace MangaCrawlerLib
             }
         }
 
-        public static void EndChapter(Chapter a_chapter)
+        public static void EndChapter(Chapter chapter)
         {
-            lock (s_limits)
+            lock (Limits)
             {
-                Debug.Assert(s_one_chapter_per_server[a_chapter.Server]);
-                s_one_chapter_per_server[a_chapter.Server] = false;
+                Debug.Assert(OneChapterPerServer[chapter.Server]);
+                OneChapterPerServer[chapter.Server] = false;
             }
 
-            s_loop_event.Set();
+            LoopEvent.Set();
         }
 
-        public static void Release(Serie a_serie)
+        public static void Release(Serie serie)
         {
-            Release(a_serie.Server);
+            Release(serie.Server);
         }
 
-        public static void Release(Page a_page)
+        public static void Release(Page page)
         {
-            Release(a_page.Server);
+            Release(page.Server);
         }
 
-        public static void Release(Chapter a_chapter)
+        public static void Release(Chapter chapter)
         {
-            Release(a_chapter.Server);
+            Release(chapter.Server);
         }
 
-        public static void Release(Server a_server)   
+        public static void Release(Server server)   
         {
-            lock (s_limits)
+            lock (Limits)
             {
-                s_connections--;
-                s_server_connections[a_server]--;
+                _connections--;
+                ServerConnections[server]--;
 
-                Debug.Assert(s_connections >= 0);
-                Debug.Assert(s_server_connections[a_server] >= 0);
+                Debug.Assert(_connections >= 0);
+                Debug.Assert(ServerConnections[server] >= 0);
             }
 
-            s_loop_event.Set();
+            LoopEvent.Set();
         }
 
         private static Limit GetLimit()
         {
             Limit candidate = null;
 
-            var candidates1 = from limit in s_limits
+            var candidates1 = from limit in Limits
                               where limit.Priority != Priority.Pages
-                              where s_server_connections[limit.Server] <
+                              where ServerConnections[limit.Server] <
                                  limit.Server.Crawler.MaxConnectionsPerServer
                               orderby limit.Priority, limit.LimiterOrder
                               select limit;
 
-            var candidates2 = from limit in s_limits
+            var candidates2 = from limit in Limits
                               where limit.Priority == Priority.Pages
-                              where !s_one_chapter_per_server[limit.Server]
+                              where !OneChapterPerServer[limit.Server]
                               orderby limit.LimiterOrder
                               select limit;
 
-            if (s_connections < DownloadManager.Instance.MangaSettings.MaximumConnections)
+            if (_connections < DownloadManager.Instance.MangaSettings.MaximumConnections)
                 candidate = candidates1.FirstOrDefault();
 
             if (candidate == null)
                 candidate = candidates2.FirstOrDefault();
 
             if (candidate != null)
-                s_limits.Remove(candidate);
+                Limits.Remove(candidate);
 
             return candidate;
         }

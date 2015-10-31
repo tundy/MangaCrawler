@@ -10,45 +10,45 @@ namespace MangaCrawlerLib
     {
         public string SettingsDir { get; private set; }
         public MangaSettings MangaSettings { get; private set; }
-        public Bookmarks Bookmarks { get; private set; }
-        public Downloading Downloadings { get; private set; }
+        public Bookmarks Bookmarks { get; }
+        public Downloading Downloadings { get; }
         
         private List<Entity> m_downloading = new List<Entity>();
-        private Server[] m_servers;
+        private Server[] _servers;
 
         public static DownloadManager Instance { get; private set; }
 
-        public static void Create(MangaSettings a_manga_settings, string a_settings_dir)
+        public static void Create(MangaSettings mangaSettings, string settingsDir)
         {
-            Instance = new DownloadManager(a_manga_settings, a_settings_dir);
+            Instance = new DownloadManager(mangaSettings, settingsDir);
             Instance.Initialize();
         }
 
         private void Initialize()
         {
-            m_servers = Catalog.LoadCatalog();
+            _servers = Catalog.LoadCatalog();
 
             Bookmarks.Load();
             Downloadings.Load();
         }
 
-        private DownloadManager(MangaSettings a_manga_settings, string a_settings_dir)
+        private DownloadManager(MangaSettings mangaSettings, string settingsDir)
         {
-            SettingsDir = a_settings_dir;
-            MangaSettings = a_manga_settings;
+            SettingsDir = settingsDir;
+            MangaSettings = mangaSettings;
             Bookmarks = new Bookmarks();
             Downloadings = new Downloading();
 
-            HtmlWeb.UserAgent_Actual = a_manga_settings.UserAgent;
+            HtmlWeb.UserAgent_Actual = mangaSettings.UserAgent;
         }
 
-        public bool NeedGUIRefresh(bool a_reset_state)
+        public bool NeedGUIRefresh(bool resetState)
         {
             lock (m_downloading)
             {
                 var result = m_downloading.Any();
 
-                if (a_reset_state)
+                if (resetState)
                 {
                     m_downloading = (from entity in m_downloading
                                      where entity.IsDownloading
@@ -59,70 +59,63 @@ namespace MangaCrawlerLib
             }
         }
 
-        public void DownloadSeries(Server a_server, bool a_force)
+        public void DownloadSeries(Server server, bool force)
         {
-            if (a_server == null)
+            if (server == null)
                 return;
 
-            if (!a_server.IsDownloadRequired(a_force))
+            if (!server.IsDownloadRequired(force))
                 return;
 
-            if (a_server.MiniatureState != Entity.MiniatureStatus.Loading)
+            if (server.MiniatureState != Entity.MiniatureStatus.Loading)
             {
-                //a_server.Miniature = null;
-                a_server.MiniatureState = Entity.MiniatureStatus.None;
+                //server.Miniature = null;
+                server.MiniatureState = Entity.MiniatureStatus.None;
             }
 
             lock (m_downloading)
             {
-                m_downloading.Add(a_server);
+                m_downloading.Add(server);
             }
 
-            a_server.State = ServerState.Waiting;
-            a_server.LimiterOrder = Catalog.NextID();
+            server.State = ServerState.Waiting;
+            server.LimiterOrder = Catalog.NextID();
 
-            new Task(() =>
-            {
-                a_server.DownloadSeries();
-
-            }, TaskCreationOptions.LongRunning).Start();
+            new Task(server.DownloadSeries, TaskCreationOptions.LongRunning).Start();
         }
 
-        public void DownloadChapters(Serie a_serie, bool a_force)
+        public void DownloadChapters(Serie serie, bool force)
         {
-            if (a_serie == null)
+            if (serie == null)
                 return;
 
-            if (!a_serie.IsDownloadRequired(a_force))
+            if (!serie.IsDownloadRequired(force))
                 return;
 
-            if (a_serie.MiniatureState != Entity.MiniatureStatus.Loading)
+            if (serie.MiniatureState != Entity.MiniatureStatus.Loading)
             {
-                //a_serie.Miniature = null;
-                a_serie.MiniatureState = Entity.MiniatureStatus.None;
+                //serie.Miniature = null;
+                serie.MiniatureState = Entity.MiniatureStatus.None;
             }
 
             lock (m_downloading)
             {
-                m_downloading.Add(a_serie);
+                m_downloading.Add(serie);
             }
-            a_serie.State = SerieState.Waiting;
-            a_serie.LimiterOrder = Catalog.NextID();
+            serie.State = SerieState.Waiting;
+            serie.LimiterOrder = Catalog.NextID();
 
-            new Task(() =>
-            {
-                a_serie.DownloadChapters();
-            }, TaskCreationOptions.LongRunning).Start();
+            new Task(serie.DownloadChapters, TaskCreationOptions.LongRunning).Start();
         }
 
-        public void DownloadPages(IEnumerable<Chapter> a_chapters)
+        public void DownloadPages(IEnumerable<Chapter> chapters)
         {
-            a_chapters = a_chapters.Where(ch => !ch.IsDownloading).ToList();
+            chapters = chapters.Where(ch => !ch.IsDownloading).ToList();
 
-            if (!a_chapters.Any())
+            if (!chapters.Any())
                 return;
 
-            foreach (var chapter in a_chapters)
+            foreach (var chapter in chapters)
             {
                 chapter.State = ChapterState.Waiting;
                 lock (m_downloading)
@@ -136,13 +129,13 @@ namespace MangaCrawlerLib
 
             new Task(() =>
             {
-                foreach (var chapter in a_chapters)
+                foreach (var chapter in chapters)
                 {
-                    var chapter_sync = chapter;
+                    var chapterSync = chapter;
 
                     new Task(() =>
                     {
-                        chapter_sync.DownloadPagesAndImages();
+                        chapterSync.DownloadPagesAndImages();
                     }, TaskCreationOptions.LongRunning).Start();
                 }
             }).Start();
@@ -151,13 +144,7 @@ namespace MangaCrawlerLib
         /// <summary>
         /// Thread safe - immutable.
         /// </summary>
-        public IEnumerable<Server> Servers
-        {
-            get
-            {
-                return m_servers;
-            }
-        }
+        public IEnumerable<Server> Servers => _servers;
 
         public void Debug_ResetCheckDate()
         {
@@ -165,88 +152,88 @@ namespace MangaCrawlerLib
                 server.ResetCheckDate();
         }
 
-        public void Debug_InsertSerie(int a_index, Server a_server)
+        public void Debug_InsertSerie(int index, Server server)
         {
-            (a_server.Crawler as TestServerCrawler).Debug_InsertSerie(a_index);
+            (server.Crawler as TestServerCrawler).Debug_InsertSerie(index);
         }
 
-        public void Debug_RemoveSerie(Server a_server, Serie SelectedSerie)
+        public void Debug_RemoveSerie(Server server, Serie selectedSerie)
         {
-            (a_server.Crawler as TestServerCrawler).Debug_RemoveSerie(SelectedSerie);
+            (server.Crawler as TestServerCrawler).Debug_RemoveSerie(selectedSerie);
         }
 
-        public void Debug_InsertChapter(int a_index, Serie a_serie)
+        public void Debug_InsertChapter(int index, Serie serie)
         {
-            (a_serie.Crawler as TestServerCrawler).Debug_InsertChapter(a_serie, a_index);
+            (serie.Crawler as TestServerCrawler).Debug_InsertChapter(serie, index);
         }
 
-        public void Debug_RemoveChapter(Chapter a_chapter)
+        public void Debug_RemoveChapter(Chapter chapter)
         {
-            (a_chapter.Crawler as TestServerCrawler).Debug_RemoveChapter(a_chapter);
+            (chapter.Crawler as TestServerCrawler).Debug_RemoveChapter(chapter);
         }
 
-        public void Debug_RenameSerie(Serie a_serie)
+        public void Debug_RenameSerie(Serie serie)
         {
-            (a_serie.Crawler as TestServerCrawler).Debug_RenameSerie(a_serie);
+            (serie.Crawler as TestServerCrawler).Debug_RenameSerie(serie);
         }
 
-        public void Debug_RenameChapter(Chapter a_chapter)
+        public void Debug_RenameChapter(Chapter chapter)
         {
-            (a_chapter.Crawler as TestServerCrawler).Debug_RenameChapter(a_chapter);
+            (chapter.Crawler as TestServerCrawler).Debug_RenameChapter(chapter);
         }
 
-        public void Debug_ChangeSerieURL(Serie a_serie)
+        public void Debug_ChangeSerieURL(Serie serie)
         {
-            (a_serie.Crawler as TestServerCrawler).Debug_ChangeSerieURL(a_serie);
+            (serie.Crawler as TestServerCrawler).Debug_ChangeSerieURL(serie);
         }
 
-        public void Debug_ChangeChapterURL(Chapter a_chapter)
+        public void Debug_ChangeChapterURL(Chapter chapter)
         {
-            (a_chapter.Crawler as TestServerCrawler).Debug_ChangeChapterURL(a_chapter);
+            (chapter.Crawler as TestServerCrawler).Debug_ChangeChapterURL(chapter);
         }
 
-        public void BookmarksVisited(IEnumerable<Chapter> a_chapters)
+        public void BookmarksVisited(IEnumerable<Chapter> chapters)
         {
-            var chapters_grouped_by_serie = from ch in a_chapters
+            var chaptersGroupedBySerie = from ch in chapters
                      group ch by ch.Serie;
 
-            foreach (var chapters_group in chapters_grouped_by_serie)
+            foreach (var chaptersGroup in chaptersGroupedBySerie)
             {
-                foreach (var chapter in chapters_group)
+                foreach (var chapter in chaptersGroup)
                     chapter.Visited = true;
 
-                Catalog.Save(chapters_group.First().Serie);
+                Catalog.Save(chaptersGroup.First().Serie);
             }
         }
 
-        public void Debug_DuplicateSerieName(Serie a_serie)
+        public void Debug_DuplicateSerieName(Serie serie)
         {
-            (a_serie.Crawler as TestServerCrawler).Debug_DuplicateSerieName(a_serie);
+            (serie.Crawler as TestServerCrawler).Debug_DuplicateSerieName(serie);
         }
 
-        public void Debug_DuplicateChapterName(Chapter a_chapter)
+        public void Debug_DuplicateChapterName(Chapter chapter)
         {
-            (a_chapter.Crawler as TestServerCrawler).Debug_DuplicateChapterName(a_chapter);
+            (chapter.Crawler as TestServerCrawler).Debug_DuplicateChapterName(chapter);
         }
 
-        public void Debug_DuplicateSerieURL(Serie a_serie)
+        public void Debug_DuplicateSerieURL(Serie serie)
         {
-            (a_serie.Crawler as TestServerCrawler).Debug_DuplicateSerieURL(a_serie);
+            (serie.Crawler as TestServerCrawler).Debug_DuplicateSerieURL(serie);
         }
 
-        public void Debug_DuplicateChapterURL(Chapter a_chapter)
+        public void Debug_DuplicateChapterURL(Chapter chapter)
         {
-            (a_chapter.Crawler as TestServerCrawler).Debug_DuplicateChapterURL(a_chapter);
+            (chapter.Crawler as TestServerCrawler).Debug_DuplicateChapterURL(chapter);
         }
 
-        public void Debug_MakeSerieError(Serie a_serie)
+        public void Debug_MakeSerieError(Serie serie)
         {
-            (a_serie.Crawler as TestServerCrawler).Debug_MakeSerieError(a_serie);
+            (serie.Crawler as TestServerCrawler).Debug_MakeSerieError(serie);
         }
 
-        public void Debug_MakeChapterError(Chapter a_chapter)
+        public void Debug_MakeChapterError(Chapter chapter)
         {
-            (a_chapter.Crawler as TestServerCrawler).Debug_MakeChapterError(a_chapter);
+            (chapter.Crawler as TestServerCrawler).Debug_MakeChapterError(chapter);
         }
     }
 }

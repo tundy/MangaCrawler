@@ -20,23 +20,23 @@ namespace MangaCrawlerLib.Crawlers
             return "http://s3.mangareader.net/favicon.ico";
         }
 
-        internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
+        internal override void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback)
         {
-            var doc = DownloadDocument(a_server);
+            var doc = DownloadDocument(server);
 
             var series = doc.DocumentNode.SelectNodes(
                 "//div[@class='series_alpha']//ul[@class='series_alpha']/li/a");
 
             var result = from serie in series
                          select new Serie(
-                             a_server, 
+                             server, 
                              "http://www.mangareader.net" + serie.GetAttributeValue("href", ""), 
                              serie.InnerText);
 
-            a_progress_callback(100, result);
+            progressCallback(100, result);
         }
 
-        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
+        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> progressCallback)
         {
             var doc = DownloadDocument(a_serie);
 
@@ -48,21 +48,21 @@ namespace MangaCrawlerLib.Crawlers
                               "http://www.mangareader.net" + chapter.GetAttributeValue("href", ""),
                               chapter.InnerText)).ToList();
 
-            a_progress_callback(100, result);
+            progressCallback(100, result);
 
             if (result.Count == 0)
                 throw new Exception("Serie has no chapters");
         }
 
-        internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
+        internal override IEnumerable<Page> DownloadPages(Chapter chapter)
         {
-            var doc = DownloadDocument(a_chapter);
+            var doc = DownloadDocument(chapter);
 
             var pages = doc.DocumentNode.SelectNodes("//div[@id='selectpage']/select/option");
 
             var result = (from page in pages
                           select new Page(
-                              a_chapter,
+                              chapter,
                               "http://www.mangareader.net" + page.GetAttributeValue("value", ""),
                               pages.IndexOf(page) + 1,
                               page.NextSibling.InnerText)).ToList();
@@ -78,9 +78,9 @@ namespace MangaCrawlerLib.Crawlers
             return "http://www.mangareader.net/alphabetical";
         }
 
-        internal override string GetImageURL(Page a_page)
+        internal override string GetImageURL(Page page)
         {
-            var doc = DownloadDocument(a_page);
+            var doc = DownloadDocument(page);
             var image = doc.DocumentNode.SelectSingleNode("//div[@id='imgholder']/a/img");
             return image.GetAttributeValue("src", "");
         }

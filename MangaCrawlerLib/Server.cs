@@ -14,21 +14,21 @@ namespace MangaCrawlerLib
         #region SeriesCachedList
         private class SeriesCachedList : CachedList<Serie>
         {
-            private Server m_server;
+            private readonly Server _server;
 
-            public SeriesCachedList(Server a_server)
+            public SeriesCachedList(Server server)
             {
-                m_server = a_server;
+                _server = server;
             }
 
             protected override void EnsureLoaded()
             {
-                lock (m_lock)
+                lock (Lock)
                 {
-                    if (m_list != null)
+                    if (List != null)
                         return;
 
-                    m_list = Catalog.LoadServerSeries(m_server);
+                    List = Catalog.LoadServerSeries(_server);
                 }
             }
         }
@@ -55,53 +55,53 @@ namespace MangaCrawlerLib
         }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private Crawler m_crawler;
+        private Crawler _crawler;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private ServerState m_state;
+        private ServerState _serverState;
 
-        private CachedList<Serie> m_series;
-        private DateTime m_check_date_time = DateTime.MinValue;
+        private readonly CachedList<Serie> _series;
+        private DateTime _checkDateTime = DateTime.MinValue;
 
         public int DownloadProgress { get; private set; }
-        public string Name { get; private set; }
+        public string Name { get; }
         protected internal bool SeriesDownloadedFirstTime { get; protected set; }
 
-        internal Server(string a_url, string a_name)
-            : this(a_url, a_name, Catalog.NextID(), ServerState.Initial, false)
+        internal Server(string url, string name)
+            : this(url, name, Catalog.NextID(), ServerState.Initial, false)
         {
         }
 
-        internal Server(string a_url, string a_name, ulong a_id, ServerState a_state, 
-            bool a_series_downloaded_first_time)
-            : base(a_id)
+        internal Server(string url, string name, ulong id, ServerState serverState, 
+            bool seriesDownloadedFirstTime)
+            : base(id)
         {
-            m_series = new SeriesCachedList(this);
-            URL = a_url;
-            Name = a_name;
-            m_state = a_state;
-            SeriesDownloadedFirstTime = a_series_downloaded_first_time;
+            _series = new SeriesCachedList(this);
+            URL = url;
+            Name = name;
+            _serverState = serverState;
+            SeriesDownloadedFirstTime = seriesDownloadedFirstTime;
 
-            if (m_state == ServerState.Downloading)
-                m_state = ServerState.Initial;
-            if (m_state == ServerState.Waiting)
-                m_state = ServerState.Initial;
-            if (m_state == ServerState.Downloaded)
-                m_state = ServerState.Initial;
+            if (_serverState == ServerState.Downloading)
+                _serverState = ServerState.Initial;
+            if (_serverState == ServerState.Waiting)
+                _serverState = ServerState.Initial;
+            if (_serverState == ServerState.Downloaded)
+                _serverState = ServerState.Initial;
         }
 
-        internal override Crawler Crawler => m_crawler ?? (m_crawler = CrawlerList.Get(this));
+        internal override Crawler Crawler => _crawler ?? (_crawler = CrawlerList.Get(this));
 
         /// <summary>
         /// Thread safe.
         /// </summary>
-        public IList<Serie> Series => m_series;
+        public IList<Serie> Series => _series;
 
         internal void ResetCheckDate()
         {
-            m_check_date_time = DateTime.MinValue;
+            _checkDateTime = DateTime.MinValue;
 
-            if (!m_series.Filled) return;
+            if (!_series.Filled) return;
             foreach (var serie in Series)
                 serie.ResetCheckDate();
         }
@@ -124,7 +124,7 @@ namespace MangaCrawlerLib
                         if (progress == 100)
                         {
                             result = EliminateDoubles(result.ToList());
-                            m_series.ReplaceInnerCollection(result, SeriesDownloadedFirstTime, s => s.Title, merge);
+                            _series.ReplaceInnerCollection(result, SeriesDownloadedFirstTime, s => s.Title, merge);
                         }
 
                         DownloadProgress = progress;
@@ -145,25 +145,25 @@ namespace MangaCrawlerLib
 
             SeriesDownloadedFirstTime = true;
             Catalog.Save(this);
-            m_check_date_time = DateTime.Now;
+            _checkDateTime = DateTime.Now;
         }
 
-        private static IEnumerable<Serie> EliminateDoubles(List<Serie> a_series)
+        private static IEnumerable<Serie> EliminateDoubles(List<Serie> series)
         {
-            var same_name_same_url = (from serie in a_series
+            var sameNameSameURL = (from serie in series
                                       group serie by new { serie.Title, serie.URL } into gr
                                       from s in gr.Skip(1)
                                       select s).ToList();
 
-            if (same_name_same_url.Any())
-                a_series = a_series.Except(same_name_same_url).ToList();
+            if (sameNameSameURL.Any())
+                series = series.Except(sameNameSameURL).ToList();
 
-            var same_name_diff_url = from serie in a_series
+            var sameNameDiffURL = from serie in series
                                      group serie by serie.Title into gr
                                      where gr.Count() > 1
                                      select gr;
 
-            foreach (var gr in same_name_diff_url)
+            foreach (var gr in sameNameDiffURL)
             {
                 var index = 1;
 
@@ -171,46 +171,40 @@ namespace MangaCrawlerLib
                 {
                     for (; ; )
                     {
-                        string new_title = $"{serie.Title} ({index})";
+                        string newTitle = $"{serie.Title} ({index})";
                         index++;
 
-                        if (a_series.Any(ch => ch.Title == new_title))
+                        if (series.Any(ch => ch.Title == newTitle))
+                        {
                             continue;
+                        }
 
-                        serie.Title = new_title;
+                        serie.Title = newTitle;
                         break;
                     }
                 }
             }
 
-            return a_series;
+            return series;
         }
 
-        public override string ToString()
-        {
-            return $"{ID} - {Name}";
-        }
+        public override string ToString() => $"{ID} - {Name}";
 
-        public bool IsDownloadRequired(bool a_force)
+        public bool IsDownloadRequired(bool force)
         {
-            if (State == ServerState.Downloaded)
+            if (State != ServerState.Downloaded) return (State == ServerState.Error) || (State == ServerState.Initial);
+            if (!force)
             {
-                if (!a_force)
-                {
-                    return DateTime.Now - m_check_date_time > DownloadManager.Instance.MangaSettings.CheckTimePeriod;
-                }
-                else
-                    return true;
+                return DateTime.Now - _checkDateTime > DownloadManager.Instance.MangaSettings.CheckTimePeriod;
             }
-            else
-                return (State == ServerState.Error) || (State == ServerState.Initial);
+            return true;
         }
 
         public override string GetDirectory()
         {
-            var manga_root_dir = DownloadManager.Instance.MangaSettings.GetMangaRootDir(true); ;
+            var mangaRootDir = DownloadManager.Instance.MangaSettings.GetMangaRootDir(true);
 
-            return manga_root_dir +
+            return mangaRootDir +
                    Path.DirectorySeparatorChar +
                    FileUtils.RemoveInvalidFileCharacters(Name) +
                    Path.DirectorySeparatorChar;
@@ -220,7 +214,7 @@ namespace MangaCrawlerLib
         {
             get
             {
-                return m_state;
+                return _serverState;
             }
             set
             {
@@ -261,7 +255,7 @@ namespace MangaCrawlerLib
                     }
                 }
 
-                m_state = value;
+                _serverState = value;
             }
         }
 

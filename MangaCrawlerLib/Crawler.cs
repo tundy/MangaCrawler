@@ -10,7 +10,7 @@ namespace MangaCrawlerLib
 {
     internal abstract class Crawler
     {
-        public Image DefaultImage { get; protected set; } = null;
+        public Image DefaultImage { get; protected set; }
 
         protected void SetDefaultImage(string uri)
         {
@@ -21,21 +21,18 @@ namespace MangaCrawlerLib
 
         public abstract string Name { get; }
 
-        internal virtual string GetServerMiniatureUrl()
-        {
-            return string.Empty;
-        }
+        internal virtual string GetServerMiniatureUrl() => string.Empty;
 
         internal string GetSerieMiniatureUrl(Serie serie)
         {
-            MiniatureAquire(serie);
+            Limiter.AquireMiniature(serie);
             try
             {
                 return _GetSerieMiniatureUrl(serie);
             }
             finally
             {
-                MiniatureRelease(serie);
+                Limiter.Release(serie);
             }
         }
 
@@ -44,23 +41,13 @@ namespace MangaCrawlerLib
             return string.Empty;
         }
 
-        private void MiniatureAquire(Serie serie)
-        {
-            Limiter.AquireMiniature(serie);
-        }
-        private void MiniatureRelease(Serie serie)
-        {
-            Limiter.Release(serie);
-        }
-
-
-        internal abstract void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback);
-        internal abstract void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback);
-        internal abstract IEnumerable<Page> DownloadPages(Chapter a_chapter);
+        internal abstract void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback);
+        internal abstract void DownloadChapters(Serie serie, Action<int, IEnumerable<Chapter>> progressCallback);
+        internal abstract IEnumerable<Page> DownloadPages(Chapter chapter);
         public abstract string GetServerURL();
-        internal abstract string GetImageURL(Page a_page);
+        internal abstract string GetImageURL(Page page);
 
-        private static T DownloadWithRetry<T>(Func<T> a_func)
+        private static T DownloadWithRetry<T>(Func<T> func)
         {
             WebException ex1 = null;
 
@@ -68,72 +55,56 @@ namespace MangaCrawlerLib
             {
                 try
                 {
-                    return a_func();
+                    return func();
                 }
                 catch (WebException ex)
                 {
                     Loggers.MangaCrawler.Error("Exception, {0}", ex);
 
                     ex1 = ex;
-                    continue;
                 }
             }
 
             throw ex1;
         }
 
-        internal HtmlDocument DownloadDocument(Server a_server, string a_url = null, CookieContainer cookies = null)
-        {
-            return DownloadDocument(
-                a_url ?? a_server.URL,
-                () => a_server.State = ServerState.Downloading,
-                () => Limiter.Aquire(a_server),
-                () => Limiter.Release(a_server),
-                cookies);
-        }
+        internal HtmlDocument DownloadDocument(Server server, string url = null, CookieContainer cookies = null) => DownloadDocument(
+            url ?? server.URL,
+            () => server.State = ServerState.Downloading,
+            () => Limiter.Aquire(server),
+            () => Limiter.Release(server),
+            cookies);
 
-        internal HtmlDocument DownloadDocument(Serie a_serie, string a_url = null, CookieContainer cookies = null)
-        {
-            return DownloadDocument(
-                a_url ?? a_serie.URL, 
-                () => a_serie.State  = SerieState.Downloading, 
-                () => Limiter.Aquire(a_serie),
-                () => Limiter.Release(a_serie),
-                cookies);
-        }
+        internal HtmlDocument DownloadDocument(Serie serie, string url = null, CookieContainer cookies = null) => DownloadDocument(
+            url ?? serie.URL, 
+            () => serie.State  = SerieState.Downloading, 
+            () => Limiter.Aquire(serie),
+            () => Limiter.Release(serie),
+            cookies);
 
-        internal HtmlDocument DownloadDocument(Chapter a_chapter, string a_url = null, CookieContainer cookies = null)
-        {
-            return DownloadDocument(
-                a_url ?? a_chapter.URL, 
-                () => a_chapter.State = ChapterState.DownloadingPagesList, 
-                () => Limiter.Aquire(a_chapter),
-                () => Limiter.Release(a_chapter), 
-                a_chapter.Token,
-                cookies);
-        }
+        internal HtmlDocument DownloadDocument(Chapter chapter, string url = null, CookieContainer cookies = null) => DownloadDocument(
+            url ?? chapter.URL, 
+            () => chapter.State = ChapterState.DownloadingPagesList, 
+            () => Limiter.Aquire(chapter),
+            () => Limiter.Release(chapter), 
+            chapter.Token,
+            cookies);
 
-        internal HtmlDocument DownloadDocument(Page a_page, string a_url = null, CookieContainer cookies = null)
-        {
-            return DownloadDocument(
-                a_url ?? a_page.URL, 
-                () => a_page.State = PageState.Downloading, 
-                () => Limiter.Aquire(a_page),
-                () => Limiter.Release(a_page),
-                a_page.Chapter.Token,
-                cookies);
-        }
+        internal HtmlDocument DownloadDocument(Page page, string url = null, CookieContainer cookies = null) => DownloadDocument(
+            url ?? page.URL, 
+            () => page.State = PageState.Downloading, 
+            () => Limiter.Aquire(page),
+            () => Limiter.Release(page),
+            page.Chapter.Token,
+            cookies);
 
-        internal HtmlDocument DownloadDocument(string a_url, Action a_started,
-            Action a_aquire, Action a_release, CookieContainer cookies = null)
-        {
-            return DownloadDocument(a_url, a_started, a_aquire, a_release, CancellationToken.None, cookies);
-        }
+        internal HtmlDocument DownloadDocument(string url, Action started,
+            Action aquire, Action release, CookieContainer cookies = null) => DownloadDocument(url, started, aquire, release, CancellationToken.None, cookies);
 
-        private CookieContainer cookiePot;
+        private CookieContainer _cookiePot;
         internal bool OnPreRequest2(HttpWebRequest request)
         {
-            request.CookieContainer = cookiePot;
+            request.CookieContainer = _cookiePot;
             return true;
         }
         protected void OnAfterResponse2(HttpWebRequest request, HttpWebResponse response)
@@ -141,14 +112,14 @@ namespace MangaCrawlerLib
             //do nothing
         }
 
-        internal HtmlDocument DownloadDocument(string a_url, Action a_started, 
-            Action a_aquire, Action a_release, CancellationToken a_token, CookieContainer cookies = null)
+        internal HtmlDocument DownloadDocument(string url, Action started, 
+            Action aquire, Action release, CancellationToken cancellationToken, CookieContainer cookies = null)
         {
             return DownloadWithRetry(() =>
             {
-                a_aquire();
+                aquire();
 
-                a_started?.Invoke();
+                started?.Invoke();
 
                 try
                 {
@@ -161,18 +132,18 @@ namespace MangaCrawlerLib
                         //web.PostResponse = OnAfterResponse2;
                     }*/
 
-                    var page = web.Load(Uri.EscapeUriString(a_url));
+                    var page = web.Load(Uri.EscapeUriString(url));
 
                     if (web.StatusCode == HttpStatusCode.NotFound)
                     {
                         Loggers.MangaCrawler.InfoFormat(
                             "Series - page was not found, url: {0}",
-                            a_url);
+                            url);
 
                         return null;
                     }
 
-                    a_token.ThrowIfCancellationRequested();
+                    cancellationToken.ThrowIfCancellationRequested();
 
                     Thread.Sleep(DownloadManager.Instance.MangaSettings.SleepAfterEachDownloadMS);
 
@@ -180,62 +151,59 @@ namespace MangaCrawlerLib
                 }
                 finally
                 {
-                    a_release();
+                    release();
                 }
             });
         }
 
-        internal virtual MemoryStream GetImageStream(Page a_page)
+        internal virtual MemoryStream GetImageStream(Page page)
         {
             return DownloadWithRetry(() =>
             {
                 try
                 {
-                    Limiter.Aquire(a_page);
+                    Limiter.Aquire(page);
 
                     var myReq = (HttpWebRequest)WebRequest.Create(
-                        Uri.EscapeUriString(a_page.ImageURL));
+                        Uri.EscapeUriString(page.ImageURL));
 
                     myReq.UserAgent = DownloadManager.Instance.MangaSettings.UserAgent;
                     myReq.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-                    myReq.Referer = Uri.EscapeUriString(a_page.URL);
+                    myReq.Referer = Uri.EscapeUriString(page.URL);
 
                     var buffer = new byte[4*1024];
 
-                    var mem_stream = new MemoryStream();
+                    var memStream = new MemoryStream();
 
-                    using (var image_stream = myReq.GetResponse().GetResponseStream())
+                    using (var imageStream = myReq.GetResponse().GetResponseStream())
                     {
                         for (;;)
                         {
-                            var readed = image_stream.Read(buffer, 0, buffer.Length);
+                            var readed = imageStream.Read(buffer, 0, buffer.Length);
 
                             if (readed == 0)
                                 break;
 
-                            a_page.Chapter.Token.ThrowIfCancellationRequested();
+                            page.Chapter.Token.ThrowIfCancellationRequested();
 
-                            mem_stream.Write(buffer, 0, readed);
+                            memStream.Write(buffer, 0, readed);
                         }
                     }
 
                     Thread.Sleep(DownloadManager.Instance.MangaSettings.SleepAfterEachDownloadMS);
 
-                    mem_stream.Position = 0;
-                    return mem_stream;
+                    memStream.Position = 0;
+                    return memStream;
                 }
                 finally
                 {
-                    Limiter.Release(a_page);
+                    Limiter.Release(page);
                 }
             });
         }
 
         public virtual int MaxConnectionsPerServer => DownloadManager.Instance.MangaSettings.MaximumConnectionsPerServer;
 
-        public virtual string GetImageURLExtension(string a_image_url)
-        {
-            return Path.GetExtension(a_image_url);
-        }
+        public virtual string GetImageURLExtension(string imageURL) => Path.GetExtension(imageURL);
     }
 }

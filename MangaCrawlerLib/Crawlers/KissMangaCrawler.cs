@@ -29,14 +29,14 @@ namespace MangaCrawlerLib.Crawlers
             return img.GetAttributeValue("src", string.Empty);
         }
 
-        internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
+        internal override void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback)
         {
             var cookies = new CookieContainer();
-            var target = new Uri(a_server.URL);
+            var target = new Uri(server.URL);
             cookies.Add(target, new Cookie("vns_doujinshi", "1"));
-            var doc = DownloadDocument(a_server, null, cookies);
+            var doc = DownloadDocument(server, null, cookies);
 
-            var last_page = Int32.Parse(
+            var last_page = int.Parse(
                 doc.DocumentNode.SelectSingleNode("//ul[@class='pager']//li[5]/a").GetAttributeValue("page", ""));
 
             var series = new ConcurrentBag<Tuple<int, int, string, string>>();
@@ -47,9 +47,9 @@ namespace MangaCrawlerLib.Crawlers
             {
                 var result = from serie in series
                     orderby serie.Item1, serie.Item2
-                    select new Serie(a_server, serie.Item4, serie.Item3);
+                    select new Serie(server, serie.Item4, serie.Item3);
 
-                a_progress_callback(progress, result.ToArray());
+                progressCallback(progress, result.ToArray());
             };
 
             Parallel.For(0, last_page + 1,
@@ -67,7 +67,7 @@ namespace MangaCrawlerLib.Crawlers
                             url += $"?page={page}";
                         }
 
-                        var page_doc = DownloadDocument(a_server, url);
+                        var page_doc = DownloadDocument(server, url);
 
                         var page_series = page_doc.DocumentNode.SelectNodes("//table[@class='listing']/tr/td[1]/a");
 
@@ -97,7 +97,7 @@ namespace MangaCrawlerLib.Crawlers
             update(100);
         }
 
-        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
+        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> progressCallback)
         {
             var doc = DownloadDocument(a_serie);
 
@@ -114,7 +114,7 @@ namespace MangaCrawlerLib.Crawlers
                         if (yes != null)
                         {
                             a_serie.URL = yes.GetAttributeValue("href", "");
-                            DownloadChapters(a_serie, a_progress_callback);
+                            DownloadChapters(a_serie, progressCallback);
                             return;
                         }
                     }
@@ -127,15 +127,15 @@ namespace MangaCrawlerLib.Crawlers
                               "http://kissmanga.com" + chapter.GetAttributeValue("href", ""), 
                               chapter.InnerText)).ToList();
 
-            a_progress_callback(100, result);
+            progressCallback(100, result);
 
             if (result.Count == 0)
                 throw new Exception("Serie has no chapters");
         }
 
-        internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
+        internal override IEnumerable<Page> DownloadPages(Chapter chapter)
         {
-            var doc = DownloadDocument(a_chapter);
+            var doc = DownloadDocument(chapter);
 
             var pages = doc.DocumentNode.SelectNodes("//div[@id='divImage']/p/img").Count();
 
@@ -145,8 +145,8 @@ namespace MangaCrawlerLib.Crawlers
             {
                 result.Add(
                     new Page(
-                        a_chapter,
-                        a_chapter.URL,
+                        chapter,
+                        chapter.URL,
                         page,
                         page.ToString()));
             }
@@ -162,30 +162,30 @@ namespace MangaCrawlerLib.Crawlers
             return "http://kissmanga.com/MangaList";
         }
 
-        internal override string GetImageURL(Page a_page)
+        internal override string GetImageURL(Page page)
         {
             /* string s = null;
-            foreach (HtmlNode js in DownloadDocument(a_page).DocumentNode.SelectNodes("//script[@type='text/javascript']"))
+            foreach (HtmlNode js in DownloadDocument(page).DocumentNode.SelectNodes("//script[@type='text/javascript']"))
             {
                 if (js.InnerText.TrimStart().StartsWith("var lstImages = new Array();"))
                 {
-                    s = js.InnerText.Split(';')[a_page.Index].Split('"')[1];
+                    s = js.InnerText.Split(';')[page.Index].Split('"')[1];
              * break
                 }
             }
             return s;*/
-            return (from js in DownloadDocument(a_page).DocumentNode.SelectNodes("//script[@type='text/javascript']") where js.InnerText.TrimStart().StartsWith("var lstImages = new Array();") select js.InnerText.Split(';')[a_page.Index].Split('"')[1]).FirstOrDefault();
+            return (from js in DownloadDocument(page).DocumentNode.SelectNodes("//script[@type='text/javascript']") where js.InnerText.TrimStart().StartsWith("var lstImages = new Array();") select js.InnerText.Split(';')[page.Index].Split('"')[1]).FirstOrDefault();
 
             //Original MangaCrawler Code:
-            //var doc = DownloadDocument(a_page);
+            //var doc = DownloadDocument(page);
             //var pages = doc.DocumentNode.SelectNodes("//div[@id='divImage']/p/img");
-            //var image = pages.ElementAt(a_page.Index - 1);
+            //var image = pages.ElementAt(page.Index - 1);
             //return image.GetAttributeValue("src", "");
         }
 
-        public override string GetImageURLExtension(string a_image_url)
+        public override string GetImageURLExtension(string imageURL)
         {
-            var ext = base.GetImageURLExtension(a_image_url);
+            var ext = base.GetImageURLExtension(imageURL);
             var match = Regex.Match(ext, "\\.(?i)(jpg|gif|png|bmp)");
             return match.Value;
         }

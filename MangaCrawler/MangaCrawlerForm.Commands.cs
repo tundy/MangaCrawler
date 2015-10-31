@@ -112,7 +112,7 @@ namespace MangaCrawler
 
             public void DownloadSeriesForSelectedServer()
             {
-                DownloadManager.Instance.DownloadSeries(GUI.SelectedServer, a_force: false);
+                DownloadManager.Instance.DownloadSeries(GUI.SelectedServer, force: false);
                 GUI.UpdateAll();
             }
 
@@ -156,7 +156,7 @@ namespace MangaCrawler
 
             public void DownloadChaptersForSerie(Serie a_serie)
             {
-                DownloadManager.Instance.DownloadChapters(a_serie, a_force: false);
+                DownloadManager.Instance.DownloadChapters(a_serie, force: false);
                 GUI.UpdateAll();
             }
 
@@ -354,7 +354,7 @@ namespace MangaCrawler
 
             public void DownloadSeriesForSelectedBookmarkSerie()
             {
-                DownloadManager.Instance.DownloadChapters(GUI.SelectedBookmarkedSerie, a_force: false);
+                DownloadManager.Instance.DownloadChapters(GUI.SelectedBookmarkedSerie, force: false);
                 GUI.UpdateAll();
             }
 

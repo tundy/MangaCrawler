@@ -10,32 +10,32 @@ namespace MangaCrawlerLib
     public class Bookmarks
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private List<Serie> m_bookmarks = new List<Serie>();
+        private List<Serie> _bookmarks = new List<Serie>();
 
         internal void Load()
         {
-            m_bookmarks = Catalog.LoadBookmarks();
+            _bookmarks = Catalog.LoadBookmarks();
         }
 
         internal void RemoveNotExisted()
         {
-            m_bookmarks = (from serie in m_bookmarks
+            _bookmarks = (from serie in _bookmarks
                            where serie.Server.Series.Contains(serie)
                            select serie).ToList();
         }
 
-        private void Save()
+        private static void Save()
         {
             Catalog.SaveBookmarks();
         }
 
-        public void Add(Serie a_serie)
+        public void Add(Serie serie)
         {
-            var copy = m_bookmarks.ToList();
-            copy.Add(a_serie);
-            m_bookmarks = copy;
+            var copy = _bookmarks.ToList();
+            copy.Add(serie);
+            _bookmarks = copy;
 
-            DownloadManager.Instance.BookmarksVisited(a_serie.Chapters);
+            DownloadManager.Instance.BookmarksVisited(serie.Chapters);
 
             Save();
         }
@@ -43,28 +43,19 @@ namespace MangaCrawlerLib
         /// <summary>
         /// Thread safe.
         /// </summary>
-        public IEnumerable<Serie> List
-        {
-            get
-            {
-                return m_bookmarks;
-            }
-        }
+        public IEnumerable<Serie> List => _bookmarks;
 
-        public void Remove(Serie a_serie)
+        public void Remove(Serie serie)
         {
-            var copy = m_bookmarks.ToList();
-            copy.Remove(a_serie);
-            m_bookmarks = copy;
+            var copy = _bookmarks.ToList();
+            copy.Remove(serie);
+            _bookmarks = copy;
 
             Save();
         }
 
-        public IEnumerable<Serie> GetSeriesWithNewChapters()
-        {
-            return (from serie in m_bookmarks
-                    where serie.GetNewChapters().Any()
-                    select serie).ToList();
-        }
+        public IEnumerable<Serie> GetSeriesWithNewChapters() => (from serie in _bookmarks
+                                                                 where serie.GetNewChapters().Any()
+                                                                 select serie).ToList();
     }
 }

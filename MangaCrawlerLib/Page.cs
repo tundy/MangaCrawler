@@ -9,7 +9,7 @@ namespace MangaCrawlerLib
     public class Page : Entity
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private PageState m_state;
+        private PageState _pageState;
 
         public Chapter Chapter { get; protected set; }
         public int Index { get; protected set; }
@@ -18,35 +18,35 @@ namespace MangaCrawlerLib
         public string Name { get; protected set; }
         public string ImageFilePath { get; protected set; }
 
-        internal Page(Chapter a_chapter, string a_url, int a_index, string a_name)
-            : this(a_chapter, a_url, a_index, Catalog.NextID(), a_name, null, null, PageState.Initial)
+        internal Page(Chapter a_chapter, string url, int index, string name)
+            : this(a_chapter, url, index, Catalog.NextID(), name, null, null, PageState.Initial)
         {
         }
 
-        internal Page(Chapter a_chapter, string a_url, int a_index, ulong a_id, string a_name, byte[] a_hash, 
-            string a_image_file_path, PageState a_state) : base(a_id)
+        internal Page(Chapter a_chapter, string url, int index, ulong id, string name, byte[] hash, 
+            string imageFilePath, PageState pageState) : base(id)
         {
-            Hash = a_hash;
-            ImageFilePath = a_image_file_path;
-            m_state = a_state;
+            Hash = hash;
+            ImageFilePath = imageFilePath;
+            _pageState = pageState;
 
             Chapter = a_chapter;
-            URL = HtmlDecode(a_url);
-            Index = a_index;
+            URL = HtmlDecode(url);
+            Index = index;
 
             if (State == PageState.Downloading)
-                m_state = PageState.Initial;
+                _pageState = PageState.Initial;
             if (State == PageState.Waiting)
-                m_state = PageState.Initial;
+                _pageState = PageState.Initial;
 
-            if (a_name != "")
+            if (name != "")
             {
-                a_name = a_name.Trim();
-                a_name = a_name.Replace("\t", " ");
-                while (a_name.IndexOf("  ") != -1)
-                    a_name = a_name.Replace("  ", " ");
-                a_name = HtmlDecode(a_name);
-                Name = FileUtils.RemoveInvalidFileCharacters(a_name);
+                name = name.Trim();
+                name = name.Replace("\t", " ");
+                while (name.IndexOf("  ") != -1)
+                    name = name.Replace("  ", " ");
+                name = HtmlDecode(name);
+                Name = FileUtils.RemoveInvalidFileCharacters(name);
             }
             else
                 Name = Index.ToString();
@@ -58,10 +58,7 @@ namespace MangaCrawlerLib
 
         public Serie Serie => Chapter.Serie;
 
-        public override string ToString()
-        {
-            return $"{Chapter} - {Index}/{Chapter.Pages.Count}";
-        }
+        public override string ToString() => $"{Chapter} - {Index}/{Chapter.Pages.Count}";
 
         internal void GetImageURL()
         {
@@ -75,15 +72,15 @@ namespace MangaCrawlerLib
             return Crawler.GetImageStream(this);  
         }
 
-        internal void DownloadAndSavePageImage(PageNamingStrategy a_pns)
+        internal void DownloadAndSavePageImage(PageNamingStrategy pageNamingStrategy)
         {
             new DirectoryInfo(Chapter.GetDirectory()).Create();
 
-            var temp_file = new FileInfo(Path.GetTempFileName());
+            var tempFile = new FileInfo(Path.GetTempFileName());
 
             try
             {
-                using (var file_stream = new FileStream(temp_file.FullName, FileMode.Create))
+                using (var fileStream = new FileStream(tempFile.FullName, FileMode.Create))
                 {
                     MemoryStream ms;
 
@@ -110,7 +107,7 @@ namespace MangaCrawlerLib
                             throw;
                         }
 
-                        ms.CopyTo(file_stream);
+                        ms.CopyTo(fileStream);
 
                         ms.Position = 0;
                         byte[] hash;
@@ -123,58 +120,58 @@ namespace MangaCrawlerLib
                     }
                 }
 
-                var file_name = Rename(a_pns, Name);
+                var fileName = Rename(pageNamingStrategy, Name);
 
                 ImageFilePath = Path.Combine(
                     Chapter.GetDirectory(),
                     FileUtils.RemoveInvalidFileCharacters(
-                        Path.GetFileNameWithoutExtension(file_name) + Crawler.GetImageURLExtension(ImageURL).ToLower()));
+                        Path.GetFileNameWithoutExtension(fileName) + Crawler.GetImageURLExtension(ImageURL).ToLower()));
 
-                var image_file = new FileInfo(ImageFilePath);
+                var imageFile = new FileInfo(ImageFilePath);
 
-                if (image_file.Exists)
-                    image_file.Delete();
+                if (imageFile.Exists)
+                    imageFile.Delete();
 
-                temp_file.MoveTo(image_file.FullName);
+                tempFile.MoveTo(imageFile.FullName);
 
                 State = PageState.Downloaded;
             }
             finally
             {
-                if (temp_file.Exists)
-                    if (temp_file.FullName != ImageFilePath)
-                        temp_file.Delete();
+                if (tempFile.Exists)
+                    if (tempFile.FullName != ImageFilePath)
+                        tempFile.Delete();
             }
         }
 
-        private string Rename(PageNamingStrategy a_pns, string a_name)
+        private string Rename(PageNamingStrategy pageNamingStrategy, string name)
         {
-            Debug.Assert((a_pns != PageNamingStrategy.IndexToPreserveOrder) || 
-                         (a_pns != PageNamingStrategy.PrefixToPreserverOrder));
+            Debug.Assert((pageNamingStrategy != PageNamingStrategy.IndexToPreserveOrder) || 
+                         (pageNamingStrategy != PageNamingStrategy.PrefixToPreserverOrder));
 
             var index = Index.ToString();
             if (DownloadManager.Instance.MangaSettings.PadPageNamesWithZeros)
                 index = index.PadLeft(Chapter.Pages.Count.ToString().Length, '0');
 
-            switch (a_pns)
+            switch (pageNamingStrategy)
             {
                 case PageNamingStrategy.AlwaysUseIndex:
                     return index;
                 case PageNamingStrategy.AlwaysUsePrefix:
                     return $"{index} - {Name}";
                 default:
-                    return a_name;
+                    return name;
             }
         }
 
-        internal bool RequiredDownload(string a_chapter_dir)
+        internal bool RequiredDownload(string chapterDir)
         {
             try
             {
                 if (ImageFilePath == null)
                     return true;
                 // ReSharper disable once PossibleNullReferenceException
-                if (new FileInfo(ImageFilePath).Directory.FullName + "\\" != a_chapter_dir)
+                if (new FileInfo(ImageFilePath).Directory.FullName + "\\" != chapterDir)
                     return true;
                 if (!new FileInfo(ImageFilePath).Exists)
                     return true;
@@ -197,7 +194,7 @@ namespace MangaCrawlerLib
         {
             get
             {
-                return m_state;
+                return _pageState;
             }
             internal set
             {
@@ -232,16 +229,13 @@ namespace MangaCrawlerLib
                     }
                 }
 
-                m_state = value;
+                _pageState = value;
             }
         }
 
         public override bool IsDownloading => (State == PageState.Downloading) ||
                                               (State == PageState.Waiting);
 
-        public override string GetDirectory()
-        {
-            return Chapter.GetDirectory();
-        }
+        public override string GetDirectory() => Chapter.GetDirectory();
     }
 }

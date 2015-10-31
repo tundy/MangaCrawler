@@ -221,29 +221,29 @@ namespace MangaCrawlerLib.Crawlers
             Thread.Sleep(NextInt(MIN_SERVER_DELAY, m_max_server_delay));
         }
 
-        internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
+        internal override void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback)
         {
-            Limiter.Aquire(a_server);
+            Limiter.Aquire(server);
             try
             {
                 Sleep();
             }
             finally
             {
-                Limiter.Release(a_server);
+                Limiter.Release(server);
             }
 
-            a_server.State = ServerState.Downloading;
+            server.State = ServerState.Downloading;
 
-            if (a_server.Name.Contains("error series none"))
+            if (server.Name.Contains("error series none"))
                 throw new Exception();
 
-            Debug.Assert(a_server.Name == m_name);
+            Debug.Assert(server.Name == m_name);
 
-            var gen_exc = a_server.Name.Contains("error series few");
+            var gen_exc = server.Name.Contains("error series few");
 
             var toreport = (from serie in m_series
-                            select new Serie(a_server, serie.URL, serie.Title)).ToArray();
+                            select new Serie(server, serie.URL, serie.Title)).ToArray();
 
             var exc = false;
 
@@ -272,14 +272,14 @@ namespace MangaCrawlerLib.Crawlers
                         foreach (var el in list)
                             series.Add(new Tuple<int, int, Serie>(listlist.IndexOf(list), list.IndexOf(el), el));
 
-                        Limiter.Aquire(a_server);
+                        Limiter.Aquire(server);
                         try
                         {
                             Sleep();
                         }
                         finally
                         {
-                            Limiter.Release(a_server);
+                            Limiter.Release(server);
                         }
 
                         var result = (from s in series
@@ -290,7 +290,7 @@ namespace MangaCrawlerLib.Crawlers
                             if (gen_exc)
                                 return;
 
-                        a_progress_callback(
+                        progressCallback(
                             result.Count * 100 / total,
                             result);
 
@@ -305,7 +305,7 @@ namespace MangaCrawlerLib.Crawlers
                 if (gen_exc)
                     throw new Exception();
 
-                a_progress_callback(100, toreport);
+                progressCallback(100, toreport);
             }
         }
 
@@ -317,7 +317,7 @@ namespace MangaCrawlerLib.Crawlers
             }
         }
 
-        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
+        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> progressCallback)
         {
             Limiter.Aquire(a_serie);
             try
@@ -333,25 +333,25 @@ namespace MangaCrawlerLib.Crawlers
 
             Debug.Assert(a_serie.Server.Name == m_name);
 
-            var serie = m_series.FirstOrDefault(s => s.Title == a_serie.Title);
+            var testSerie = m_series.FirstOrDefault(s => s.Title == a_serie.Title);
 
-            if (serie == null)
+            if (testSerie == null)
                 throw new Exception();
 
-            if (serie.Title.Contains("error chapters none"))
+            if (testSerie.Title.Contains("error chapters none"))
                 throw new Exception();
 
-            var gen_exc = serie.Title.Contains("error chapters few");
+            var genExc = testSerie.Title.Contains("error chapters few");
 
             var count = -1;
 
-            if (gen_exc)
+            if (genExc)
                 count = m_items_per_page * 8 + m_items_per_page / 3;
 
-            if (serie.Title.Contains("few chapters"))
+            if (testSerie.Title.Contains("few chapters"))
                 count = 3;
 
-            var toreport = (from chapter in serie.GetChapters(count)
+            var toreport = (from chapter in testSerie.GetChapters(count)
                             select new Chapter(a_serie, chapter.URL, chapter.Title)).ToArray();
 
             var total = toreport.Length;
@@ -395,15 +395,15 @@ namespace MangaCrawlerLib.Crawlers
                                       orderby s.Item1, s.Item2
                                       select s.Item3).ToList();
 
-                        if (gen_exc)
+                        if (genExc)
                             if (exc)
                                 return;
 
-                        a_progress_callback(
+                        progressCallback(
                             result.Count * 100 / total,
                             result);
 
-                        if (!gen_exc) return;
+                        if (!genExc) return;
                         if (exc) return;
                         exc = true;
                         throw new Exception();
@@ -411,63 +411,63 @@ namespace MangaCrawlerLib.Crawlers
             }
             else
             {
-                a_progress_callback(100, toreport);
+                progressCallback(100, toreport);
 
-                if (gen_exc)
+                if (genExc)
                     throw new Exception();
             }
         }
 
-        internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
+        internal override IEnumerable<Page> DownloadPages(Chapter chapter)
         {
-            a_chapter.Token.ThrowIfCancellationRequested();
+            chapter.Token.ThrowIfCancellationRequested();
 
-            Limiter.Aquire(a_chapter);
+            Limiter.Aquire(chapter);
             try
             {
                 Sleep();
             }
             finally
             {
-                Limiter.Release(a_chapter);
+                Limiter.Release(chapter);
             }
 
-            a_chapter.Token.ThrowIfCancellationRequested();
+            chapter.Token.ThrowIfCancellationRequested();
 
-            a_chapter.State = ChapterState.DownloadingPagesList;
+            chapter.State = ChapterState.DownloadingPagesList;
 
-            var serie = m_series.First(s => s.Title == a_chapter.Serie.Title);
-            var chapter = serie.GetChapters().First(c => c.Title == a_chapter.Title);
-            var pages = chapter.GeneratePages().ToList();
+            var testSerie = m_series.First(s => s.Title == chapter.Serie.Title);
+            var testChapter = testSerie.GetChapters().First(c => c.Title == chapter.Title);
+            var pages = testChapter.GeneratePages().ToList();
 
-            if (a_chapter.Title.Contains("error pages none"))
+            if (chapter.Title.Contains("error pages none"))
                 throw new Exception();
 
             var result = from page in pages
-                         select new Page(a_chapter, "fake_page_url",
+                         select new Page(chapter, "fake_page_url",
                              pages.IndexOf(page) + 1, page);
 
             return result;
         }
 
-        internal override MemoryStream GetImageStream(Page a_page)
+        internal override MemoryStream GetImageStream(Page page)
         {
-            if (a_page.Chapter.Title.Contains("error page getimagestream"))
+            if (page.Chapter.Title.Contains("error page getimagestream"))
             {
-                if (a_page.Index == 45)
+                if (page.Index == 45)
                     throw new Exception();
             }
 
-            a_page.Chapter.Token.ThrowIfCancellationRequested();
+            page.Chapter.Token.ThrowIfCancellationRequested();
 
             using (var bmp = new Bitmap(NextInt(600, 2000), NextInt(600, 2000)))
             {
                 using (var g = Graphics.FromImage(bmp))
                 {
-                    var str = "server: " + a_page.Server.Name + Environment.NewLine +
-                                 "serie: " + a_page.Serie.Title + Environment.NewLine +
-                                 "chapter: " + a_page.Chapter.Title + Environment.NewLine +
-                                 "page: " + a_page.Name;
+                    var str = "server: " + page.Server.Name + Environment.NewLine +
+                                 "serie: " + page.Serie.Title + Environment.NewLine +
+                                 "chapter: " + page.Chapter.Title + Environment.NewLine +
+                                 "page: " + page.Name;
 
                     g.DrawString(
                         str,
@@ -477,14 +477,14 @@ namespace MangaCrawlerLib.Crawlers
                     );
                 }
 
-                Limiter.Aquire(a_page);
+                Limiter.Aquire(page);
                 try
                 {
                     Sleep();
                 }
                 finally
                 {
-                    Limiter.Release(a_page);
+                    Limiter.Release(page);
                 }
 
                 var ms = new MemoryStream();
@@ -493,14 +493,14 @@ namespace MangaCrawlerLib.Crawlers
             }
         }
 
-        internal override string GetImageURL(Page a_page)
+        internal override string GetImageURL(Page page)
         {
-            a_page.Chapter.Token.ThrowIfCancellationRequested();
+            page.Chapter.Token.ThrowIfCancellationRequested();
 
-            a_page.State = PageState.Downloading;
+            page.State = PageState.Downloading;
 
-            if (!a_page.Chapter.Title.Contains("error page getimageurl")) return "fake_image_url.jpg";
-            if (a_page.Index == 55)
+            if (!page.Chapter.Title.Contains("error page getimageurl")) return "fake_image_url.jpg";
+            if (page.Index == 55)
                 throw new Exception();
 
             return "fake_image_url.jpg";

@@ -21,19 +21,19 @@ namespace MangaCrawlerLib.Crawlers
             return "http://www.mangahere.co/favicon32.ico";
         }
 
-        internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
+        internal override void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback)
         {
-            var doc = DownloadDocument(a_server);
+            var doc = DownloadDocument(server);
 
             var series = doc.DocumentNode.SelectNodes("//div[@class='list_manga']/ul/li/a");
 
             var result = from serie in series
-                         select new Serie(a_server, serie.GetAttributeValue("href", ""), serie.InnerText);
+                         select new Serie(server, serie.GetAttributeValue("href", ""), serie.InnerText);
 
-            a_progress_callback(100, result);
+            progressCallback(100, result);
         }
 
-        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
+        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> progressCallback)
         {
             var doc = DownloadDocument(a_serie);
 
@@ -44,14 +44,14 @@ namespace MangaCrawlerLib.Crawlers
                 var no_chapters = doc.DocumentNode.SelectSingleNode("//div[@class='detail_list']/ul/li/div");
                 if ((no_chapters != null) && no_chapters.InnerText.Contains("No Manga Chapter"))
                 {
-                    a_progress_callback(100, new Chapter[0]);
+                    progressCallback(100, new Chapter[0]);
                     return;
                 }
 
                 var licensed = doc.DocumentNode.SelectSingleNode("//div[@class='detail_list']/div");
                 if ((licensed != null) && licensed.InnerText.Contains("has been licensed, it is not available in"))
                 {
-                    a_progress_callback(100, new Chapter[0]);
+                    progressCallback(100, new Chapter[0]);
                     return;
                 }
             }
@@ -59,21 +59,21 @@ namespace MangaCrawlerLib.Crawlers
             var result = (from chapter in chapters
                           select new Chapter(a_serie, chapter.GetAttributeValue("href", ""), chapter.InnerText)).ToList();
 
-            a_progress_callback(100, result);
+            progressCallback(100, result);
 
             if (result.Count == 0)
                 throw new Exception("Serie has no chapters");
         }
 
-        internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
+        internal override IEnumerable<Page> DownloadPages(Chapter chapter)
         {
-            var doc = DownloadDocument(a_chapter);
+            var doc = DownloadDocument(chapter);
 
             var pages = doc.DocumentNode.SelectNodes("//section[@class='readpage_top']/div[3]/span/select/option");
 
             var result = (from page in pages
                           select new Page(
-                              a_chapter,
+                              chapter,
                               page.GetAttributeValue("value", ""),
                               pages.IndexOf(page) + 1,
                               page.NextSibling.InnerText)).ToList();
@@ -89,16 +89,16 @@ namespace MangaCrawlerLib.Crawlers
             return "http://www.mangahere.com/mangalist/";
         }
 
-        internal override string GetImageURL(Page a_page)
+        internal override string GetImageURL(Page page)
         {
-            var doc = DownloadDocument(a_page);
+            var doc = DownloadDocument(page);
             var image = doc.DocumentNode.SelectSingleNode("//img[@id='image']");
             return image.GetAttributeValue("src", "");
         }
 
-        public override string GetImageURLExtension(string a_image_url)
+        public override string GetImageURLExtension(string imageURL)
         {
-            var ext = base.GetImageURLExtension(a_image_url);
+            var ext = base.GetImageURLExtension(imageURL);
             var match = Regex.Match(ext, "\\.(?i)(jpg|gif|png|bmp)");
             return match.Value;
         }

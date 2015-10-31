@@ -38,35 +38,35 @@ namespace MangaCrawlerLib.Crawlers
             return img.GetAttributeValue("src", "");
         }
 
-        internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
+        internal override void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback)
         {
-            var series = DownloadDocument(a_server).DocumentNode.SelectNodes("//div[@class='group']/div[@class='title']/a");
+            var series = DownloadDocument(server).DocumentNode.SelectNodes("//div[@class='group']/div[@class='title']/a");
             var result = from serie in series
-                         select new Serie(a_server, serie.GetAttributeValue("href", ""), serie.InnerText);
-            a_progress_callback(100, result);
+                         select new Serie(server, serie.GetAttributeValue("href", ""), serie.InnerText);
+            progressCallback(100, result);
         }
 
-        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
+        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> progressCallback)
         {
             var chapters = DownloadDocument(a_serie).DocumentNode.SelectNodes("//div[@class='element']/div[@class='title']/a");
             var result = (from chapter in chapters
                           select new Chapter(a_serie, chapter.GetAttributeValue("href", ""), chapter.InnerText)).ToList();
-            a_progress_callback(100, result);
+            progressCallback(100, result);
             if (result.Count == 0)
                 throw new Exception("Serie has no chapters");
         }
 
-        internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
+        internal override IEnumerable<Page> DownloadPages(Chapter chapter)
         {
-            //var doc = DownloadDocument(a_chapter, a_chapter.URL + "/page/1");
-            //var doc = DownloadDocument(a_chapter);
+            //var doc = DownloadDocument(chapter, chapter.URL + "/page/1");
+            //var doc = DownloadDocument(chapter);
 
 
 
             var doc = new HtmlDocument();
-            //var h = new HttpDownloader(a_chapter.URL, null, null);
+            //var h = new HttpDownloader(chapter.URL, null, null);
             //doc.OptionReadEncoding = false;
-            var request = (HttpWebRequest)WebRequest.Create(a_chapter.URL);
+            var request = (HttpWebRequest)WebRequest.Create(chapter.URL);
             request.Method = "GET";
             
             //request.TransferEncoding = "utf-8";
@@ -102,7 +102,7 @@ namespace MangaCrawlerLib.Crawlers
             var pages = Convert.ToInt32(pagesString.Substring(0, pagesString.IndexOf(' ')));
             for (var i = 0; i < pages; i++)
             {
-                result.Add(new Page(a_chapter, a_chapter.URL + "/page/" + (i+1), i+1, ""));
+                result.Add(new Page(chapter, chapter.URL + "/page/" + (i+1), i+1, ""));
             }
 
             if (result.Count == 0)
@@ -116,9 +116,9 @@ namespace MangaCrawlerLib.Crawlers
             return "http://yomanga.co/reader/directory/";
         }
 
-        internal override string GetImageURL(Page a_page)
+        internal override string GetImageURL(Page page)
         {
-            var doc = DownloadDocument(a_page);
+            var doc = DownloadDocument(page);
             var img = doc.DocumentNode.SelectSingleNode("//a/img[@class='open']");
             return img.GetAttributeValue("src", "");
         }

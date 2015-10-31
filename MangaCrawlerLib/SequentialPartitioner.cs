@@ -6,42 +6,36 @@ namespace MangaCrawlerLib
 {
     internal class SequentialPartitioner<T> : Partitioner<T>
     {
-        private readonly IList<T> m_source;
+        private readonly IList<T> _source;
 
-        public SequentialPartitioner(IList<T> a_source)
+        public SequentialPartitioner(IList<T> source)
         {
-            m_source = a_source;
+            _source = source;
         }
 
-        public override bool SupportsDynamicPartitions
-        {
-            get
-            {
-                return true;
-            }
-        }
+        public override bool SupportsDynamicPartitions => true;
 
-        public override IList<IEnumerator<T>> GetPartitions(int a_partition_count)
+        public override IList<IEnumerator<T>> GetPartitions(int partitionCount)
         {
             var dp = GetDynamicPartitions();
-            return (from i in Enumerable.Range(0, a_partition_count)
+            return (from i in Enumerable.Range(0, partitionCount)
                     select dp.GetEnumerator()).ToList();
         }
 
         public override IEnumerable<T> GetDynamicPartitions()
         {
-            return GetDynamicPartitions(m_source.GetEnumerator());
+            return GetDynamicPartitions(_source.GetEnumerator());
         }
 
-        private static IEnumerable<T> GetDynamicPartitions(IEnumerator<T> a_enumerator)
+        private static IEnumerable<T> GetDynamicPartitions(IEnumerator<T> enumerator)
         {
             while (true)
             {
                 T el;
-                lock (a_enumerator)
+                lock (enumerator)
                 {
-                    if (a_enumerator.MoveNext())
-                        el = a_enumerator.Current;
+                    if (enumerator.MoveNext())
+                        el = enumerator.Current;
                     else
                         yield break;
                 }

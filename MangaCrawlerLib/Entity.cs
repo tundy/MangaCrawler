@@ -85,35 +85,35 @@ namespace MangaCrawlerLib
                 throw new FormatException();
         }
 
-        protected Entity(ulong a_id)
+        protected Entity(ulong id)
         {
-            ID = a_id;
+            ID = id;
         }
 
-        public override bool Equals(object a_obj)
+        public override bool Equals(object obj)
         {
-            if (a_obj == null)
+            if (obj == null)
                 return false;
-            var entity = a_obj as Entity;
+            var entity = obj as Entity;
             if (ReferenceEquals(entity, null))
                 return false;
             return this == entity;
         }
 
-        public static bool operator ==(Entity a_left, Entity a_right)
+        public static bool operator ==(Entity left, Entity right)
         {
-            if (ReferenceEquals(a_left, a_right))
+            if (ReferenceEquals(left, right))
                 return true;
-            if (ReferenceEquals(a_left, null))
+            if (ReferenceEquals(left, null))
                 return false;
-            if (ReferenceEquals(a_right, null))
+            if (ReferenceEquals(right, null))
                 return false;
-            return a_left.ID == a_right.ID;
+            return left.ID == right.ID;
         }
 
-        public static bool operator !=(Entity a_left, Entity a_right)
+        public static bool operator !=(Entity left, Entity right)
         {
-            return !(a_left == a_right);
+            return !(left == right);
         }
 
         public override int GetHashCode()
@@ -133,10 +133,10 @@ namespace MangaCrawlerLib
             }
         }
 
-        public static string HtmlDecode(string a_str)
+        public static string HtmlDecode(string str)
         {
-            a_str = HttpUtility.HtmlDecode(a_str);
-            return Uri.UnescapeDataString(a_str);
+            str = HttpUtility.HtmlDecode(str);
+            return Uri.UnescapeDataString(str);
         }
 
         internal abstract Crawler Crawler { get; }

@@ -9,7 +9,7 @@ namespace MangaCrawlerLib
     /// </summary>
     public class Downloading
     {
-        private List<Chapter> m_downloading = new List<Chapter>();
+        private List<Chapter> _downloading = new List<Chapter>();
 
         internal void Load()
         {
@@ -27,32 +27,32 @@ namespace MangaCrawlerLib
         {
             get
             {
-                m_downloading = (from chapter in m_downloading
+                _downloading = (from chapter in _downloading
                                  where chapter.State != ChapterState.Cancelled
                                  select chapter).ToList();
 
-                return m_downloading;
+                return _downloading;
             }
         }  
 
         public void Save()
         {
-            Catalog.SaveDownloading(m_downloading.Where(c => c.IsDownloading).ToList());
+            Catalog.SaveDownloading(_downloading.Where(c => c.IsDownloading).ToList());
         }
 
-        public void Remove(Chapter a_chapter)
+        public void Remove(Chapter chapter)
         {
-            m_downloading = m_downloading.Except(a_chapter).ToList();
+            _downloading = _downloading.Except(chapter).ToList();
         }
 
-        internal void Add(Chapter a_chapter)
+        internal void Add(Chapter chapter)
         {
-            if (m_downloading.Contains(a_chapter))
+            if (_downloading.Contains(chapter))
                 return;
 
-            var copy = m_downloading.ToList();
-            copy.Add(a_chapter);
-            m_downloading = copy;
+            var copy = _downloading.ToList();
+            copy.Add(chapter);
+            _downloading = copy;
         }
     }
 }

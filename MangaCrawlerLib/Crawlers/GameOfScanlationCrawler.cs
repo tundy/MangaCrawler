@@ -18,21 +18,21 @@ namespace MangaCrawlerLib.Crawlers
             return "http://gameofscanlation.moe/favicon-16x16.png";
         }
 
-        internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
+        internal override void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback)
         {
             SetDefaultImage("http://gameofscanlation.moe/android-icon-192x192.png");
 
-            var li = (from l in DownloadDocument(a_server).DocumentNode.SelectNodes("//li")
+            var li = (from l in DownloadDocument(server).DocumentNode.SelectNodes("//li")
                       where l.InnerText.TrimStart().StartsWith("Series &#038; Releases")
                       select l.SelectNodes("./ul/li")).First();
 
             var result = from l in li
-                         select new Serie(a_server, a_server.URL, l.SelectSingleNode(".//a").InnerText.Trim());
+                         select new Serie(server, server.URL, l.SelectSingleNode(".//a").InnerText.Trim());
 
-            a_progress_callback(100, result);
+            progressCallback(100, result);
         }
 
-        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
+        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> progressCallback)
         {
             var li = (from l in DownloadDocument(a_serie).DocumentNode.SelectNodes("//li")
                       where l.InnerText.TrimStart().StartsWith("Series &#038; Releases")
@@ -47,14 +47,14 @@ namespace MangaCrawlerLib.Crawlers
                          let a = ch.SelectSingleNode("./a")
                          select new Chapter(a_serie, a.GetAttributeValue("href", ""), a.InnerText);
 
-            a_progress_callback(100, result);
+            progressCallback(100, result);
         }
 
-        internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
+        internal override IEnumerable<Page> DownloadPages(Chapter chapter)
         {
             var index = 1;
             var imgs = new List<HtmlNode>();
-            foreach (var p in DownloadDocument(a_chapter).DocumentNode.SelectNodes("//div[@class='entry-content']/p"))
+            foreach (var p in DownloadDocument(chapter).DocumentNode.SelectNodes("//div[@class='entry-content']/p"))
             {
                 var x = p.SelectNodes("./img");
                 if (x != null)
@@ -64,7 +64,7 @@ namespace MangaCrawlerLib.Crawlers
             }
 
             return from img in imgs
-                   select new Page(a_chapter, a_chapter.URL, index++, "");
+                   select new Page(chapter, chapter.URL, index++, "");
         }
 
         public override string GetServerURL()
@@ -72,10 +72,10 @@ namespace MangaCrawlerLib.Crawlers
             return "http://gameofscanlation.moe/";
         }
 
-        internal override string GetImageURL(Page a_page)
+        internal override string GetImageURL(Page page)
         {
             var imgs = new List<HtmlNode>();
-            foreach (var p in DownloadDocument(a_page).DocumentNode.SelectNodes("//div[@class='entry-content']/p"))
+            foreach (var p in DownloadDocument(page).DocumentNode.SelectNodes("//div[@class='entry-content']/p"))
             {
                 var x = p.SelectNodes("./img");
                 if (x != null)
@@ -84,12 +84,12 @@ namespace MangaCrawlerLib.Crawlers
                 }
             }
 
-            var url = imgs[a_page.Index - 1].GetAttributeValue("src", "").TrimStart('/');
+            var url = imgs[page.Index - 1].GetAttributeValue("src", "").TrimStart('/');
             return "http://" + url;
             /*Uri uri;
             if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out uri))
             {
-                url = a_page.URL + url;
+                url = page.URL + url;
             }
             return url;*/
         }

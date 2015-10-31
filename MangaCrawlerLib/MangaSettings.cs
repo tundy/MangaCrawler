@@ -8,21 +8,21 @@ namespace MangaCrawlerLib
 {
     public class MangaSettings
     {
-        private string m_manga_root_dir = Environment.GetFolderPath(
+        private string _mangaRootDir = Environment.GetFolderPath(
             Environment.SpecialFolder.DesktopDirectory) +
             Path.DirectorySeparatorChar + "Manga Crawler";
 
-        private bool m_use_cbz = false;
+        private bool _useCBZ;
 
-        private bool m_delete_dir_with_images_when_cbz = false;
+        private bool _deleteDirWithImagesWhenCBZ;
 
-        private TimeSpan m_check_time_period = new TimeSpan(hours: 0, minutes: 15, seconds: 0);
+        private TimeSpan _checkTimePeriod = new TimeSpan(hours: 0, minutes: 15, seconds: 0);
 
-        private PageNamingStrategy m_page_naming_strategy = PageNamingStrategy.DoNotChange;
+        private PageNamingStrategy _pageNamingStrategy = PageNamingStrategy.DoNotChange;
 
-        private bool m_pad_page_names_with_zeros;
+        private bool _padPageNamesWithZeros;
 
-        private string m_user_agent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:26.0) Gecko/20100101 Firefox/26.0";
+        private string _userAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:26.0) Gecko/20100101 Firefox/26.0";
 
         // Sync with MangaCrawler/app.config
         public int MaximumConnections { get; set; }
@@ -33,13 +33,13 @@ namespace MangaCrawlerLib
 
         public event Action Changed;
 
-        private static string XML_MANGASETTINGS = "MangaSettings";
-        private static string XML_MANGAROOTDIR = "MangaRootDir";
-        private static string XML_USECBZ = "UseCBZ";
-        private static string XML_DELETEDIRWITHIMAGESWHENCBZ = "DeleteDirWithImagesWhenCBZ";
-        private static string XML_CHECKTIMEPERIOD = "CheckTimePeriod";
-        private static string XML_PAGENAMINGSTRATEGY = "PageNamingStrategy";
-        private static string XML_PADPAGENAMESWITHZEROS = "PadPageNamesWithZeros";
+        private const string XML_MANGASETTINGS = "MangaSettings";
+        private const string XML_MANGAROOTDIR = "MangaRootDir";
+        private const string XML_USECBZ = "UseCBZ";
+        private const string XML_DELETEDIRWITHIMAGESWHENCBZ = "DeleteDirWithImagesWhenCBZ";
+        private const string XML_CHECKTIMEPERIOD = "CheckTimePeriod";
+        private const string XML_PAGENAMINGSTRATEGY = "PageNamingStrategy";
+        private const string XML_PADPAGENAMESWITHZEROS = "PadPageNamesWithZeros";
 
         public MangaSettings()
         {
@@ -48,40 +48,37 @@ namespace MangaCrawlerLib
             SleepAfterEachDownloadMS = 0;
         }
 
-        public string GetMangaRootDir(bool a_remove_slash_on_end)
+        public string GetMangaRootDir(bool removeSlashOnEnd)
         {
-            var result = m_manga_root_dir;
+            var result = _mangaRootDir;
 
-            if (a_remove_slash_on_end)
-            {
-                if (result.Last() == Path.DirectorySeparatorChar)
-                    result = result.RemoveFromRight(1);
-            }
+            if (!removeSlashOnEnd) return result;
+            if (result.Last() == Path.DirectorySeparatorChar)
+                result = result.RemoveFromRight(1);
 
             return result;
         }
 
-        public void SetMangaRootDir(string a_manga_root_dir)
+        public void SetMangaRootDir(string mangaRootDir)
         {
-            m_manga_root_dir = a_manga_root_dir;
+            _mangaRootDir = mangaRootDir;
             OnChanged();
         }
 
         private void OnChanged()
         {
-            if (Changed != null)
-                Changed();
+            Changed?.Invoke();
         }
 
         public bool UseCBZ
         {
             get
             {
-                return m_use_cbz;
+                return _useCBZ;
             }
             set
             {
-                m_use_cbz = value;
+                _useCBZ = value;
                 OnChanged();
             }
         }
@@ -90,11 +87,11 @@ namespace MangaCrawlerLib
         {
             get
             {
-                return m_delete_dir_with_images_when_cbz;
+                return _deleteDirWithImagesWhenCBZ;
             }
             set
             {
-                m_delete_dir_with_images_when_cbz = value;
+                _deleteDirWithImagesWhenCBZ = value;
                 OnChanged();
             }
         }
@@ -103,11 +100,11 @@ namespace MangaCrawlerLib
         {
             get
             {
-                return m_check_time_period;
+                return _checkTimePeriod;
             }
             private set
             {
-                m_check_time_period = value;
+                _checkTimePeriod = value;
                 OnChanged();
             }
         }
@@ -116,11 +113,11 @@ namespace MangaCrawlerLib
         {
             get
             {
-                return m_page_naming_strategy;
+                return _pageNamingStrategy;
             }
             set
             {
-                m_page_naming_strategy = value;
+                _pageNamingStrategy = value;
                 OnChanged();
             }
         }
@@ -129,22 +126,16 @@ namespace MangaCrawlerLib
         {
             get
             {
-                return m_pad_page_names_with_zeros;
+                return _padPageNamesWithZeros;
             }
             set
             {
-                m_pad_page_names_with_zeros = value;
+                _padPageNamesWithZeros = value;
                 OnChanged();
             }
         }
 
-        public string UserAgent
-        {
-            get
-            {
-                return m_user_agent;
-            }
-        }
+        public string UserAgent => _userAgent;
 
         public bool IsMangaRootDirValid
         {
@@ -162,27 +153,27 @@ namespace MangaCrawlerLib
             }
         }
 
-        public static MangaSettings Load(XElement a_node)
+        public static MangaSettings Load(XElement node)
         {
-            if (a_node.Name != XML_MANGASETTINGS)
+            if (node.Name != XML_MANGASETTINGS)
                 throw new Exception();
 
             return new MangaSettings()
             {
-                m_manga_root_dir = a_node.Element(XML_MANGAROOTDIR).Value, 
-                UseCBZ = Boolean.Parse(a_node.Element(XML_USECBZ).Value), 
-                DeleteDirWithImagesWhenCBZ = Boolean.Parse(a_node.Element(XML_DELETEDIRWITHIMAGESWHENCBZ).Value), 
-                CheckTimePeriod = TimeSpan.Parse(a_node.Element(XML_CHECKTIMEPERIOD).Value), 
+                _mangaRootDir = node.Element(XML_MANGAROOTDIR).Value, 
+                UseCBZ = bool.Parse(node.Element(XML_USECBZ).Value), 
+                DeleteDirWithImagesWhenCBZ = bool.Parse(node.Element(XML_DELETEDIRWITHIMAGESWHENCBZ).Value), 
+                CheckTimePeriod = TimeSpan.Parse(node.Element(XML_CHECKTIMEPERIOD).Value), 
                 PageNamingStrategy = (PageNamingStrategy)Enum.Parse(
-                    typeof(PageNamingStrategy), a_node.Element(XML_PAGENAMINGSTRATEGY).Value),
-                PadPageNamesWithZeros = Boolean.Parse(a_node.Element(XML_PADPAGENAMESWITHZEROS).Value)
+                    typeof(PageNamingStrategy), node.Element(XML_PAGENAMINGSTRATEGY).Value),
+                PadPageNamesWithZeros = bool.Parse(node.Element(XML_PADPAGENAMESWITHZEROS).Value)
             };
         }
 
         public XElement GetAsXml()
         {
             return new XElement(XML_MANGASETTINGS,
-                new XElement(XML_MANGAROOTDIR, m_manga_root_dir), 
+                new XElement(XML_MANGAROOTDIR, _mangaRootDir), 
                 new XElement(XML_USECBZ, UseCBZ), 
                 new XElement(XML_DELETEDIRWITHIMAGESWHENCBZ, DeleteDirWithImagesWhenCBZ), 
                 new XElement(XML_CHECKTIMEPERIOD, CheckTimePeriod.ToString("hh\\:mm\\:ss")), 

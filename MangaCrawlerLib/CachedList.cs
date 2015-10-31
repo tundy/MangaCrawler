@@ -5,33 +5,32 @@ using System.Linq;
 namespace MangaCrawlerLib
 {
     /// <summary>
-    /// Update a_catalog with a_new.
+    /// Update catalog with @new.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="a_catalog"></param>
-    /// <param name="a_new"></param>
-    public delegate void Merge<T>(T a_catalog, T a_new);
+    /// <param name="catalog"></param>
+    /// <param name="new"></param>
+    public delegate void Merge<in T>(T catalog, T @new);
 
     /// <summary>
     /// Thread-safe, copy on write semantic.
     /// </summary>
-    /// <param name="series"></param>
     internal abstract class CachedList<T> : IList<T> where T : Entity
     {
-        protected List<T> m_list;
-        protected Object m_lock = new Object();
+        protected List<T> List;
+        protected object Lock = new object();
 
-        internal void ReplaceInnerCollection(IEnumerable<T> a_new) 
+        internal void ReplaceInnerCollection(IEnumerable<T> @new) 
         {
             EnsureLoaded();
 
-            var list = m_list.ToList();
+            var list = List.ToList();
 
-            foreach (var el in m_list.Except(a_new))
+            foreach (var el in List.Except(@new))
                 list.Remove(el);
 
             var index = 0;
-            foreach (var el in a_new)
+            foreach (var el in @new)
             {
                 if (list.Count == index)
                     list.Insert(index, el);
@@ -40,76 +39,68 @@ namespace MangaCrawlerLib
                 index++;
             }
 
-            m_list = list;
+            List = list;
         }
 
-        internal void ReplaceInnerCollection(IEnumerable<T> a_new, bool a_remove, Func<T, string> a_key_selector, 
-            Merge<T> a_merge)
+        internal void ReplaceInnerCollection(IEnumerable<T> @new, bool remove, Func<T, string> keySelector, 
+            Merge<T> merge)
         {
             EnsureLoaded();
 
-            var copy = m_list.ToList();
-            var new_list = a_new.ToList();
+            var copy = List.ToList();
+            var newList = @new.ToList();
 
-            Merge(new_list, copy, a_key_selector, a_merge);
+            Merge(newList, copy, keySelector, merge);
 
-            if (a_remove)
+            if (remove)
             {
-                var to_remove = copy.Except(new_list).ToList();
-                new_list.RemoveAll(el => to_remove.Contains(el));
+                var toRemove = copy.Except(newList).ToList();
+                newList.RemoveAll(el => toRemove.Contains(el));
             }
 
-            m_list = new_list;
+            List = newList;
         }
 
-        private static void Merge(List<T> a_new, List<T> a_local,
-            Func<T, string> a_key_selector, Merge<T> a_merge)
+        private static void Merge(IList<T> @new, IEnumerable<T> local,
+            Func<T, string> keySelector, Merge<T> merge)
         {         
-            var local_dict = a_local.ToDictionary(a_key_selector);
+            var localDict = local.ToDictionary(keySelector);
 
-            for (var i = 0; i < a_new.Count; i++)
+            for (var i = 0; i < @new.Count; i++)
             {
-                var key = a_key_selector(a_new[i]);
-                if (local_dict.ContainsKey(key))
-                {
-                    a_merge(local_dict[key], a_new[i]);
-                    a_new[i] = local_dict[key];
-                }
+                var key = keySelector(@new[i]);
+                if (!localDict.ContainsKey(key)) continue;
+                merge(localDict[key], @new[i]);
+                @new[i] = localDict[key];
             }
         }
 
-        internal bool Filled
-        {
-            get
-            {
-                return (m_list != null);
-            }
-        }
+        internal bool Filled => (List != null);
 
-        public int IndexOf(T a_item)
+        public int IndexOf(T item)
         {
             EnsureLoaded();
 
-            return m_list.IndexOf(a_item);
+            return List.IndexOf(item);
         }
 
-        public void Insert(int a_index, T a_item)
+        public void Insert(int index, T item)
         {
             throw new InvalidOperationException();
         }
 
-        public void RemoveAt(int a_index)
+        public void RemoveAt(int index)
         {
             throw new InvalidOperationException();
         }
 
-        public T this[int a_index]
+        public T this[int index]
         {
             get
             {
                 EnsureLoaded();
 
-                return m_list[a_index];
+                return List[index];
             }
             set
             {
@@ -117,7 +108,7 @@ namespace MangaCrawlerLib
             }
         }
 
-        public void Add(T a_item)
+        public void Add(T item)
         {
             throw new NotImplementedException();
         }
@@ -127,18 +118,18 @@ namespace MangaCrawlerLib
             throw new NotImplementedException();
         }
 
-        public bool Contains(T a_item)
+        public bool Contains(T item)
         {
             EnsureLoaded();
 
-            return m_list.Contains(a_item);
+            return List.Contains(item);
         }
 
-        public void CopyTo(T[] a_array, int a_array_index)
+        public void CopyTo(T[] array, int arrayIndex)
         {
             EnsureLoaded();
 
-            m_list.CopyTo(a_array, a_array_index);
+            List.CopyTo(array, arrayIndex);
         }
 
         public int Count
@@ -147,17 +138,11 @@ namespace MangaCrawlerLib
             {
                 EnsureLoaded();
 
-                return m_list.Count;
+                return List.Count;
             }
         }
 
-        public bool IsReadOnly
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public bool IsReadOnly => false;
 
         public bool Remove(T item)
         {
@@ -168,24 +153,21 @@ namespace MangaCrawlerLib
         {
             EnsureLoaded();
 
-            return m_list.GetEnumerator();
+            return List.GetEnumerator();
         }
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             EnsureLoaded();
 
-            return m_list.GetEnumerator();
+            return List.GetEnumerator();
         }
 
         public override string ToString()
         {
-            var list = m_list;
-            
-            if (list == null)
-                return "Uninitialized";
-            else
-                return $"Count: {list.Count}";
+            var list = List;
+
+            return list == null ? "Uninitialized" : $"Count: {list.Count}";
         }
 
         protected abstract void EnsureLoaded();

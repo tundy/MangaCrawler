@@ -32,7 +32,7 @@ namespace MangaCrawlerLib.Crawlers
             return img.GetAttributeValue("src", "");
         }
 
-        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
+        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> progressCallback)
         {
             SetDefaultImage("http://www.readmanga.today/assets/img/favicon.ico");
 
@@ -49,12 +49,12 @@ namespace MangaCrawlerLib.Crawlers
                     result.Add(new Chapter(a_serie, link.GetAttributeValue("href", ""), span.InnerText));
             }*/
             var result = from a in links let span = a.SelectSingleNode("./span[@class='val']") select new Chapter(a_serie, a.GetAttributeValue("href", ""), span.InnerText);
-            a_progress_callback(100, result);
+            progressCallback(100, result);
         }
 
-        internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
+        internal override IEnumerable<Page> DownloadPages(Chapter chapter)
         {
-            var doc = DownloadDocument(a_chapter/*, a_chapter.URL + "/" + 1*/);
+            var doc = DownloadDocument(chapter/*, chapter.URL + "/" + 1*/);
             var ul = doc.DocumentNode.SelectSingleNode("//ul[@class='list-switcher-2']");
             var select = ul.SelectSingleNode(".//select[contains(@class,'jump-menu')]");
 
@@ -68,10 +68,10 @@ namespace MangaCrawlerLib.Crawlers
             //var i = 1;
             //foreach(var node in nodes)
             {
-                pages.Add(new Page(a_chapter, a_chapter.URL + "/" + i, i, ""));
+                pages.Add(new Page(chapter, chapter.URL + "/" + i, i, ""));
             }
             //var i = 1;
-            //var pages = from option in @select.SelectNodes("./option") select new Page(a_chapter, option.GetAttributeValue("value", ""), i++, string.Empty);
+            //var pages = from option in @select.SelectNodes("./option") select new Page(chapter, option.GetAttributeValue("value", ""), i++, string.Empty);
 
             return pages;
         }
@@ -81,9 +81,9 @@ namespace MangaCrawlerLib.Crawlers
             return "http://www.readmanga.today/assets/img/favicon.ico";
         }
 
-        internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
+        internal override void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback)
         {
-            var doc = DownloadDocument(a_server);
+            var doc = DownloadDocument(server);
             var div = doc.DocumentNode.SelectSingleNode("//div[@class='manga-letters']");
             var links = div.SelectNodes("./a");
 
@@ -95,9 +95,9 @@ namespace MangaCrawlerLib.Crawlers
             {
                 var result = from serie in series
                              orderby serie.Item1, serie.Item2
-                             select new Serie(a_server, serie.Item4, serie.Item3);
+                             select new Serie(server, serie.Item4, serie.Item3);
 
-                a_progress_callback(progress, result.ToArray());
+                progressCallback(progress, result.ToArray());
             };
 
             var last_page = links.Count;
@@ -114,7 +114,7 @@ namespace MangaCrawlerLib.Crawlers
                         var a = links[page];
                         //foreach (var a in links)
                         {
-                            doc = DownloadDocument(a_server, a.GetAttributeValue("href", ""));
+                            doc = DownloadDocument(server, a.GetAttributeValue("href", ""));
                             var mangas = doc.DocumentNode.SelectNodes("//span[@class='manga-item']");
                             var i = 0;
                             foreach(var manga in mangas)
@@ -138,9 +138,9 @@ namespace MangaCrawlerLib.Crawlers
             update(100);
         }
 
-        internal override string GetImageURL(Page a_page)
+        internal override string GetImageURL(Page page)
         {
-            var doc = DownloadDocument(a_page);
+            var doc = DownloadDocument(page);
             var div = doc.DocumentNode.SelectSingleNode("//div[contains(@class,'page_chapter')]");
             return div.SelectSingleNode("./img").GetAttributeValue("src", "");
         }

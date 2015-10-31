@@ -16,23 +16,23 @@ namespace MangaCrawlerLib.Crawlers
             }
         }
 
-        internal override void DownloadSeries(Server a_server, Action<int, IEnumerable<Serie>> a_progress_callback)
+        internal override void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback)
         {
-            var doc = DownloadDocument(a_server);
+            var doc = DownloadDocument(server);
 
             var series = doc.DocumentNode.SelectNodes("//table[@class='datalist']/tr[@class='datarow']");
 
             var result = from serie in series 
-                         select new Serie(a_server, 
+                         select new Serie(server, 
                                               "http://read.mangashare.com/" + 
                                                   serie.SelectSingleNode("td[@class='datarow-0']/a").
                                                   GetAttributeValue("href", "").Split(new char[] { '/' }).Last(), 
                                               serie.SelectSingleNode("td[@class='datarow-1']/text()").InnerText);
 
-            a_progress_callback(100, result);
+            progressCallback(100, result);
         }
 
-        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> a_progress_callback)
+        internal override void DownloadChapters(Serie a_serie, Action<int, IEnumerable<Chapter>> progressCallback)
         {
             string url = $"{a_serie.URL}/chapter-001/page001.html";
             var doc = DownloadDocument(a_serie);
@@ -43,15 +43,15 @@ namespace MangaCrawlerLib.Crawlers
                           select new Chapter(a_serie, chapter.GetAttributeValue("href", ""),
                               chapter.ParentNode.ParentNode.ChildNodes[3].InnerText)).ToList();
 
-            a_progress_callback(100, result);
+            progressCallback(100, result);
 
             if (result.Count == 0)
                 throw new Exception("Serie has no chapters");
         }
 
-        internal override IEnumerable<Page> DownloadPages(Chapter a_chapter)
+        internal override IEnumerable<Page> DownloadPages(Chapter chapter)
         {
-            var doc = DownloadDocument(a_chapter);
+            var doc = DownloadDocument(chapter);
 
             var pages = doc.DocumentNode.SelectNodes("//select[@name='pagejump']/option");
 
@@ -62,12 +62,12 @@ namespace MangaCrawlerLib.Crawlers
             {
                 index++;
 
-                var link = a_chapter.URL;
+                var link = chapter.URL;
                 var page_index = link.LastIndexOf("/page");
                 link = link.Left(page_index + 5);
                 link += page.GetAttributeValue("Value", "") + ".html";
 
-                var pi = new Page(a_chapter, link, index, "");
+                var pi = new Page(chapter, link, index, "");
 
                 result.Add(pi);
             }
@@ -78,9 +78,9 @@ namespace MangaCrawlerLib.Crawlers
             return result;
         }
 
-        internal override string GetImageURL(Page a_page)
+        internal override string GetImageURL(Page page)
         {
-            var doc = DownloadDocument(a_page);
+            var doc = DownloadDocument(page);
 
             var node = doc.DocumentNode.SelectSingleNode("//div[@id='page']/a/img");
 
