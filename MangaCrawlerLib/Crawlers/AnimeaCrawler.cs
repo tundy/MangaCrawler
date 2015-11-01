@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
 using TomanuExtensions;
-using System.Threading;
 using HtmlAgilityPack;
 
 namespace MangaCrawlerLib.Crawlers
@@ -38,74 +35,9 @@ namespace MangaCrawlerLib.Crawlers
                          select new Serie(server, url + link, a.InnerText);
 
             progressCallback(100, result);
+        }
 
-            /*var halfPages = doc.DocumentNode.SelectNodes("//div[@class='maincontent']/div[@class='full-page']/div[@class='half-page']");
-            var uls = new List<HtmlNode>();
-
-            foreach (var halfpage in halfPages)
-            {
-                var ul = halfpage.SelectNodes(".//ul[@class='mangalisttext']");
-                uls.AddRange(ul);
-            }
-
-
-            var series = new ConcurrentBag<Tuple<int, int, string, string>>();
-
-            var seriesProgress = 0;
-            var lastPage = uls.Count;
-
-            Action<int> update = progress =>
-            {
-                var result = from serie in series
-                             orderby serie.Item1, serie.Item2
-                             select new Serie(server, serie.Item4, serie.Item3);
-
-                progressCallback(progress, result.ToArray());
-            };
-
-
-            Parallel.For(0, lastPage,
-                new ParallelOptions()
-                {
-                    MaxDegreeOfParallelism = MaxConnectionsPerServer
-                },
-                (page, state) =>
-                {
-                    try
-                    {
-                        {
-
-                            var i = 0;
-                            var ul = uls[page];
-                            //foreach (var ul in uls)
-                            {
-                                var links = ul.SelectNodes(".//a");
-                                foreach (var m in links)
-                                {
-                                    var link = m.GetAttributeValue("href", "");
-                                    if (!string.IsNullOrEmpty(link) && link != "/.html")
-                                    {
-                                        series.Add(new Tuple<int, int, string, string>(page, i++, m.InnerText, url + link));
-                                    }
-                                }
-                                Interlocked.Increment(ref seriesProgress);
-                                update(seriesProgress / lastPage * 100 );
-                            }
-
-                        }
-                    }
-                    catch
-                    {
-                        state.Break();
-                        throw;
-                    }
-                });
-
-
-            update(100);
-        }*/
-
-            /*
+        /*
         internal override void DownloadSeries(Server server, Action<int, IEnumerable<Serie>> progressCallback)
         {
             var doc = DownloadDocument(server);
@@ -168,13 +100,12 @@ namespace MangaCrawlerLib.Crawlers
                     }
                 });
 
-            update(100);*/
+            update(100);
         }
-        
+        */
 
         protected override string _GetSerieMiniatureUrl(Serie serie)
         {
-
             var web = new HtmlWeb();
             var doc = web.Load(serie.URL);
             var img = doc.DocumentNode.SelectSingleNode("//img[@class='cover_mp']");
