@@ -192,19 +192,14 @@ namespace MangaCrawlerLib
 
         public bool IsDownloadRequired(bool force)
         {
-            if (State != ServerState.Downloaded) return (State == ServerState.Error) || (State == ServerState.Initial);
-            if (!force)
-            {
-                return DateTime.Now - _checkDateTime > DownloadManager.Instance.MangaSettings.CheckTimePeriod;
-            }
-            return true;
+            return State != ServerState.Downloaded
+                ? (State == ServerState.Error) || (State == ServerState.Initial)
+                : force || DateTime.Now - _checkDateTime > DownloadManager.Instance.MangaSettings.CheckTimePeriod;
         }
 
         public override string GetDirectory()
         {
-            var mangaRootDir = DownloadManager.Instance.MangaSettings.GetMangaRootDir(true);
-
-            return mangaRootDir +
+            return DownloadManager.Instance.MangaSettings.GetMangaRootDir(true) +
                    Path.DirectorySeparatorChar +
                    FileUtils.RemoveInvalidFileCharacters(Name) +
                    Path.DirectorySeparatorChar;
