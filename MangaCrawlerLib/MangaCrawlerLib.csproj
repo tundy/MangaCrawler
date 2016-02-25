@@ -85,7 +85,8 @@
     <Compile Include="Bookmarks.cs" />
     <Compile Include="CachedList.cs" />
     <Compile Include="Catalog.cs" />
-    <Compile Include="Crawlers\GameOfKekekeCrawler.cs" />
+    <None Include="Crawlers\GameOfKekekeCrawler.cs" />
+    <None Include="Crawlers\GameOfScanlationCrawlerOld.cs" />
     <Compile Include="Crawlers\GameOfScanlationCrawler.cs" />
     <Compile Include="Crawlers\KissMangaCrawler.cs" />
     <Compile Include="Crawlers\AnimeaCrawler.cs" />
